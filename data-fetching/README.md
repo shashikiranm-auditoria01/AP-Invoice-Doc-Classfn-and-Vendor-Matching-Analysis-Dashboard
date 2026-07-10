@@ -1,8 +1,17 @@
-# Data Pipeline — pulling AP Invoice data for a tenant
+# Data Fetching — pulling AP Invoice data for a tenant
 
-These Python scripts query **Metabase** (two instances) for a tenant + date range, run SOR
-post‑processing, and produce the `.xlsx` files the dashboard reads. `app_def_code = 'VIDE'` (the
-AP‑Invoice application code) is fixed in the queries.
+This is the **data‑fetching backend** for the dashboard. These Python scripts query **Metabase**
+(two instances) for a tenant + date range, run SOR post‑processing, and produce the `.xlsx` files the
+dashboard reads. `app_def_code = 'VIDE'` (the AP‑Invoice application code) is fixed in the queries.
+
+> **How fetching works today vs later.**
+> - **Now:** we fetch through the **Metabase API** — `ap_invoice_data.py` / `ap_invoice_mismatch_data.py`
+>   run the SQL against Metabase. **`query.md` is that SQL** (the customer‑edit mismatch query) with a
+>   plain‑English explanation of the three scenarios — it is the source‑of‑truth query, not a stray doc.
+> - **Later:** we may switch to a **direct prod‑DB connection**. Only the connection + execution layer
+>   changes — the same `query.md` SQL and the same output `.xlsx` shape (and the dashboard) stay put.
+>   The dashboard also has a `VITE_DATA_API_URL` seam so it can call a live backend instead of reading
+>   the generated `.xlsx` (see the top‑level README).
 
 ## Files
 
@@ -18,7 +27,7 @@ AP‑Invoice application code) is fixed in the queries.
 ## 1. Install
 
 ```bash
-cd data-pipeline
+cd data-fetching
 python3 -m venv .venv && source .venv/bin/activate   # optional
 pip install -r requirements.txt
 ```

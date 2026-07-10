@@ -7,7 +7,7 @@ in a React app.
 
 > **TL;DR** — `cd dashboard && npm install && npm run dev` → open the printed localhost URL. This repo
 > ships **no tenant data** (customer data is never committed), so on first run the **Get Data** gate
-> has no datasets — either run the pipeline ([`data-pipeline/`](data-pipeline/README.md)) to generate
+> has no datasets — either run the pipeline ([`data-fetching/`](data-fetching/README.md)) to generate
 > one into `dashboard/public/data/`, or use the gate's **upload an Excel file** option.
 
 ---
@@ -42,12 +42,12 @@ Two pieces that work together:
    - Live **metrics**, a filterable **reviewed** sheet with per‑column filters and two Excel exports,
      and an **Email Sender** (AP‑invoice batch + Helpdesk) backed by an optional Flask/Gmail backend.
 
-2. **`data-pipeline/`** — Python scripts that query Metabase (two instances) for a tenant + date range,
+2. **`data-fetching/`** — Python scripts that query Metabase (two instances) for a tenant + date range,
    run SOR post‑processing, and produce the `.xlsx` the dashboard reads. `app_def_code = 'VIDE'` (the
    AP‑Invoice application code) is fixed in the query.
 
 > **No customer data is committed to this repo.** `dashboard/public/data/` contains only an empty
-> `manifest.json`. Generate a dataset with the [data pipeline](data-pipeline/README.md) (or upload
+> `manifest.json`. Generate a dataset with the [data pipeline](data-fetching/README.md) (or upload
 > your own Excel via the gate) before reviewing.
 
 ---
@@ -66,7 +66,7 @@ ap-invoice-doc-classfn-vendor-analysis/
 │   ├── api/index.py              ← optional serverless entry (Vercel)
 │   ├── package.json, vite.config.ts, tailwind.config.js, tsconfig*.json
 │   └── vercel.json               ← deployment config
-├── data-pipeline/                ← Python data pull (Metabase → .xlsx)
+├── data-fetching/                ← Python data pull (Metabase → .xlsx)
 │   ├── README.md                 ← how to pull data for ANY tenant → dashboard
 │   ├── ap_invoice_data.py        ← Daily Data Review pull (classification + vendor + SOR)
 │   ├── ap_invoice_mismatch_data.py ← Mismatch Review pull (customer edits)
@@ -83,7 +83,7 @@ ap-invoice-doc-classfn-vendor-analysis/
 ## How the data flows (end to end)
 
 ```
-                         ┌────────────────────── data-pipeline/ (Python) ──────────────────────┐
+                         ┌────────────────────── data-fetching/ (Python) ──────────────────────┐
   Metabase (Regular)  ─▶ │  ap_invoice_data.py            → AP_Invoice_Tenant_<id>.xlsx          │
   Metabase (ENT)      ─▶ │  ap_invoice_mismatch_data.py   → AP_Invoice_Mismatch_Report.xlsx      │
    app_def_code='VIDE'   │  (tenant + created_at range, SOR post-processing)                     │
@@ -154,10 +154,10 @@ disabled.
 
 ## Pulling data for a tenant
 
-Full instructions are in **[`data-pipeline/README.md`](data-pipeline/README.md)**. In short:
+Full instructions are in **[`data-fetching/README.md`](data-fetching/README.md)**. In short:
 
 ```bash
-cd data-pipeline
+cd data-fetching
 pip install -r requirements.txt
 # 1) fill your PASSWORD in .env (USERNAME defaults to the configured account)
 # 2) set the tenant id(s) + date range at the top of the script, then:
@@ -243,7 +243,7 @@ original vs final), classification guidelines, and architecture diagrams.
 
 ## Credentials & security
 
-- `data-pipeline/.env` is committed with **empty** `USERNAME` / `PASSWORD`. **Fill your password
+- `data-fetching/.env` is committed with **empty** `USERNAME` / `PASSWORD`. **Fill your password
   locally before pulling; never commit real credentials.**
 - Gmail **App Passwords** entered in the Email Sender live only in the browser's `sessionStorage` —
   never written to `localStorage`, logged, or persisted.
@@ -260,4 +260,4 @@ original vs final), classification guidelines, and architecture diagrams.
 | "No documents found" after Get Data | Widen the Created From/To range, or pick **All mismatches**. |
 | Email Sender badge "Backend down" | Start the backend: `cd dashboard && npm run email-backend`. |
 | Uploaded Excel rejected ("ID column stored as numbers") | Re‑export the file with the ID columns formatted as **Text** — 18‑digit IDs lose precision if stored as numbers. |
-| Pull script asks for a password | Fill `PASSWORD` in `data-pipeline/.env`, or type it at the prompt. |
+| Pull script asks for a password | Fill `PASSWORD` in `data-fetching/.env`, or type it at the prompt. |
