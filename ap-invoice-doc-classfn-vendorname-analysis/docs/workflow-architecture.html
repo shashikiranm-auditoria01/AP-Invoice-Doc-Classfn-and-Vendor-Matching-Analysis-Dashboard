@@ -1808,9 +1808,84 @@
     </div>
 
     <p>
-      The React + Vite dashboard <span class="tag tag-ui">localhost:5174</span> accepts the Excel output
-      and renders it as an interactive document-by-document review interface. The dataset lives in memory for
-      the session; reviewed-document annotations persist to browser localStorage.
+      The React + Vite dashboard <span class="tag tag-ui">localhost:5176</span> renders the data as an
+      interactive document-by-document review interface. Rather than auto-loading, the app now opens on a
+      <strong>Get Data gate</strong> where the reviewer chooses <em>what</em> to load; the dataset then lives
+      in memory for the session and reviewed-document annotations persist to browser localStorage.
+    </p>
+
+    <div class="callout callout-new" style="border-left:4px solid #8B5CF6;background:rgba(139,92,246,.06);padding:1rem 1.25rem;border-radius:8px;margin:1.25rem 0;">
+      <strong>Updated build.</strong> The dashboard gained a pre-load <strong>Get Data gate</strong> with two
+      review modes, a persistent context bar, per-column filters on the Reviewed tab, and lazy-SOR / live-pull
+      backend seams. The subsections below reflect the current app; the older "Excel Upload Flow" is now one of
+      several ways in (via the gate's <em>upload</em> fallback).
+    </div>
+
+    <h3>The Get Data Gate &amp; Review Modes</h3>
+
+    <p>
+      On launch the reviewer picks a <strong>tenant</strong> and a <strong>created_at date range</strong>
+      (<code>app_def_code</code> is fixed to <span class="mono">VIDE</span>, the AP-Invoice application code) and
+      clicks <strong>Get Data</strong>. Only then does the dashboard load and render — for exactly that slice.
+      Two modes decide <em>which</em> data:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Mode</th><th>kind</th><th>What loads</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Daily Data Review</strong></td>
+            <td class="mono">regular</td>
+            <td>The full daily document set for the tenant + date range — review Document Classification and Vendor 2.1 matching as usual.</td>
+          </tr>
+          <tr>
+            <td><strong>Mismatch Review</strong></td>
+            <td class="mono">mismatch</td>
+            <td>The customer-edit set from <span class="mono">wk_result_edits</span> — where <span class="mono">original_json</span> (AAI/NLU value) differs from <span class="mono">final_json</span> (the customer's edit). The reviewer chooses <em>which</em> mismatches to review.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      In <strong>Mismatch Review</strong>, a <strong>scenario selector</strong> picks the mismatch class — each
+      is a separate <code>WHERE</code> clause / sheet in the pull, so the scenario is authoritative (read from the
+      source sheet tag, not re-derived):
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Scenario</th><th>Condition (AAI ≠ Customer)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Record Type</strong></td><td class="mono">original_json.recordType != final_json.recordType</td></tr>
+          <tr><td><strong>Vendor Name</strong></td><td class="mono">original_json.vendorName != final_json.vendorName</td></tr>
+          <tr><td><strong>Entity Name</strong></td><td class="mono">original_json.aaiEntityId != final_json.aaiEntityId</td></tr>
+          <tr><td><strong>All mismatches</strong></td><td>the deduped union of the three</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      A persistent <strong>context bar</strong> under the tabs always states what is being viewed —
+      <em>mode · scenario · tenant · date range · document count</em> — with a <strong>Change data</strong> button
+      back to the gate. The Details panel adds a <strong>Customer Edits (AAI → Customer)</strong> card for mismatch
+      records, highlighting exactly which field the customer changed. Entity-name display was added to the review UI.
+    </p>
+
+    <h3>Backend seams (Metabase API now → prod DB later)</h3>
+    <p>
+      Today the gate reads bundled <span class="mono">.xlsx</span> from <span class="mono">public/data/</span>
+      (filtered client-side by tenant + range + scenario). Two optional flags wire it to a live backend without any
+      UI change: <span class="mono">VITE_DATA_API_URL</span> makes <strong>Get Data</strong> POST
+      <span class="mono">{kind, scenario, tenant_id, app_def_code, date_from, date_to}</span> to
+      <span class="mono">/api/get_data</span> (live Metabase/prod query); <span class="mono">VITE_SOR_API_URL</span>
+      lazily fetches SOR data per document from <span class="mono">/api/sor/lookup</span> only when the SOR tabs are
+      opened. This lets the live base pull ship first and SOR enrichment land later, neither blocking the other.
     </p>
 
     <h3>Application Architecture</h3>
@@ -1876,7 +1951,7 @@
           <tr>
             <td><strong>Reviewed</strong></td>
             <td class="mono">ReviewedPage</td>
-            <td>All reviewed documents in one scrollable, color-coded table. Search + 8 filters (tenant, Invoice/Others, classification issue, vendor 2.1 issue, exists-in-mast_sor, record status, vendor match status, auto/manual). Two exports: <em>Export Reviewed</em> (respects filters) and <em>Export Full Data (with reviewed)</em>.</td>
+            <td>All reviewed documents (scoped to the loaded dataset) in one wide, scrollable, color-coded table. Search + top-bar filters <strong>plus a per-column filter on every column</strong> (a searchable checkbox popover with Select all / Clear); filters compose and the shown count + exports reflect them. Two exports: <em>Export Reviewed</em> (respects filters) and <em>Export Full Data (with reviewed)</em> — IDs export as text.</td>
           </tr>
           <tr>
             <td><strong>Metrics</strong></td>
@@ -2216,7 +2291,7 @@
         <tbody>
           <tr>
             <td class="mono">vite.config.ts</td>
-            <td>Dev server on port 5174, Brotli + gzip compression, chunk splitting</td>
+            <td>Dev server on port 5176, Brotli + gzip compression, chunk splitting</td>
           </tr>
           <tr>
             <td class="mono">package.json</td>
