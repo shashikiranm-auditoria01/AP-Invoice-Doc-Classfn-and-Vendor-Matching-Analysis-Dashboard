@@ -139,7 +139,7 @@ export function DataGate() {
               <label className="text-xs font-semibold text-slate-600 block mb-1.5">What to load</label>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  { k: 'regular' as DatasetKind, icon: <FileStack className="w-4 h-4" />, title: 'Daily Data Review', sub: 'Daily review for a tenant + date range' },
+                  { k: 'regular' as DatasetKind, icon: <FileStack className="w-4 h-4" />, title: 'Regular DA Analysis', sub: 'Regular review for a tenant + date range' },
                   { k: 'mismatch' as DatasetKind, icon: <GitCompare className="w-4 h-4" />, title: 'Mismatch review', sub: 'AAI vs customer edits' },
                 ]).map(opt => (
                   <button

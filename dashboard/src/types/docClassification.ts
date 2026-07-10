@@ -111,6 +111,7 @@ export interface DocClassificationDocument {
   // for the regular full pull. Drive the recordType / entityName / vendorName mismatch scenarios.
   editMessageId?: string | null;
   customerEntityName?: string | null;   // final_json entity (customer entity_name)
+  aaiEntityName?: string | null;        // original_json entity name (AAI/NLU) — from live query
   aaiEntityId?: string | null;          // original_json.aaiEntityId (AAI/NLU) — from live query
   customerEntityId?: string | null;     // final_json.aaiEntityId (customer edit) — from live query
   aaiRecordType?: string | null;        // original_json.recordType (AAI/NLU)
@@ -225,7 +226,7 @@ export const DOC_CLASSIFICATION_ALL_COLUMNS = [
 
   // Mismatch Review (customer edits) extra columns
   'Edit Message ID', 'customer entity_name', 'AAI RecordType', 'Customer RecordType', 'Customer vendorName',
-  'AAI entityID', 'Customer entityID',
+  'AAI entityID', 'Customer entityID', 'AAI entity_name',
 ] as const;
 
 // Required columns (must be present for validation)
@@ -389,6 +390,7 @@ export function parseDocClassificationRow(row: Record<string, unknown>): DocClas
       // Customer-edit / mismatch fields (only present in the Mismatch Review dataset)
       editMessageId: row['Edit Message ID'] ? String(row['Edit Message ID']) : null,
       customerEntityName: row['customer entity_name'] ? String(row['customer entity_name']) : null,
+      aaiEntityName: row['AAI entity_name'] ? String(row['AAI entity_name']) : null,
       aaiEntityId: row['AAI entityID'] ? String(row['AAI entityID']) : null,
       customerEntityId: row['Customer entityID'] ? String(row['Customer entityID']) : null,
       aaiRecordType: row['AAI RecordType'] ? String(row['AAI RecordType']) : null,

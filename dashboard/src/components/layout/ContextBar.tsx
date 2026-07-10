@@ -53,7 +53,7 @@ export function ContextBar() {
         <div className="flex items-center gap-2.5 text-sm flex-wrap">
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${pill}`}>
             {isMismatch ? <GitCompare className="w-3.5 h-3.5" /> : <FileStack className="w-3.5 h-3.5" />}
-            {isMismatch ? 'Mismatch Review' : 'Daily Data Review'}
+            {isMismatch ? 'Mismatch Review' : 'Regular DA Analysis'}
           </span>
 
           {isMismatch && scenario && (

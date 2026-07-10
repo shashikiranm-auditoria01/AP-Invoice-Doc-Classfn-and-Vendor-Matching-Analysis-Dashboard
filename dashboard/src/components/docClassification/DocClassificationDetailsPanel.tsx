@@ -453,7 +453,8 @@ export function DocClassificationDetailsPanel({
                     <span>Field</span><span>AAI / NLU</span><span></span><span>Customer</span>
                   </div>
                   <Row label="Record Type" aai={document.aaiRecordType || document.originalRecordType || ''} cust={document.customerRecordType || document.finalRecordType || ''} mismatch={edits.recordType} />
-                  <Row label="Entity Name" aai={document.aaiEntityId || ''} cust={document.customerEntityName || document.customerEntityId || ''} mismatch={edits.entityName} />
+                  <Row label="Entity Name" aai={document.aaiEntityName || ''} cust={document.customerEntityName || ''} mismatch={edits.entityName} />
+                  <Row label="Entity ID" aai={document.aaiEntityId || ''} cust={document.customerEntityId || ''} mismatch={edits.entityName} />
                   <Row label="Vendor Name" aai={document.originalVendorName || ''} cust={document.customerVendorName || ''} mismatch={edits.vendorName} />
                 </div>
               </div>
@@ -683,7 +684,7 @@ export function DocClassificationDetailsPanel({
         {/* Vendor 2.1 Analysis Section - Compact */}
         <div className="p-3 bg-purple-50/30">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-purple-900">Vendor 2.1 Analysis</h3>
+            <h3 className="text-sm font-semibold text-purple-900">Vendor Matching Info</h3>
             {/* Vendor Match/Mismatch Label (source-column-aware, normalized) */}
             {vendorBadge === 'match' ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-300">
@@ -705,19 +706,19 @@ export function DocClassificationDetailsPanel({
           <div className="space-y-2">
             {/* Vendor Info Cards - Row 1 */}
             <div className="grid grid-cols-2 gap-2">
-              {/* Original Vendor Name - Purple Theme */}
+              {/* AAI VendorName (originalVendorName — the normalized/SOR-resolved value AAI wrote) */}
               <div className="bg-purple-50 border border-purple-200 rounded p-2">
                 <span className="text-xs font-medium text-purple-600 uppercase tracking-wider block">
-                  Original Vendor Name
+                  AAI VendorName
                 </span>
                 <span className="text-sm text-slate-900 font-medium break-words">
                   {document.originalVendorName || '-'}
                 </span>
               </div>
-              {/* vendorname - Blue Theme */}
+              {/* Customer VendorName (final vendorname) */}
               <div className="bg-blue-50 border border-blue-200 rounded p-2">
                 <span className="text-xs font-medium text-blue-600 uppercase tracking-wider block">
-                  vendorname
+                  Customer VendorName
                 </span>
                 <span className="text-sm text-slate-900 font-semibold break-words">
                   {document.vendorName || '-'}
@@ -743,6 +744,27 @@ export function DocClassificationDetailsPanel({
                 </span>
                 <span className="text-sm text-slate-900 font-medium break-words">
                   {document.normalizedVendorName || '-'}
+                </span>
+              </div>
+            </div>
+
+            {/* Entity — shown once for both modes (name + id). Populated from the customer-edit /
+                live-query entity fields; '-' when the dataset doesn't carry entity data. */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-indigo-50 border border-indigo-200 rounded p-2">
+                <span className="text-xs font-medium text-indigo-600 uppercase tracking-wider block">
+                  Entity Name
+                </span>
+                <span className="text-sm text-slate-900 font-medium break-words">
+                  {document.customerEntityName || document.aaiEntityName || '-'}
+                </span>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded p-2">
+                <span className="text-xs font-medium text-indigo-600 uppercase tracking-wider block">
+                  Entity ID
+                </span>
+                <span className="text-sm text-slate-900 font-mono break-words">
+                  {document.customerEntityId || document.aaiEntityId || '-'}
                 </span>
               </div>
             </div>
