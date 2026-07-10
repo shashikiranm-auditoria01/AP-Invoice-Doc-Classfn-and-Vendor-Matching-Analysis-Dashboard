@@ -1,0 +1,30 @@
+# ── Dependencies & build output ──
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+node_modules/
+
+# ── Python ──
+**/__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ── OS / editor ──
+.DS_Store
+*.log
+Thumbs.db
+.idea/
+.vscode/
+
+# ── Scratch / test artifacts ──
+_e2e_*.mjs
+*.tmp
+
+# ── Local env overrides ──
+# NOTE: data-pipeline/.env is intentionally TRACKED as an empty template
+# (USERNAME/PASSWORD blank). Never commit real credentials into it.
+# Any OTHER .env (e.g. dashboard/.env.local) stays local:
+dashboard/.env
+dashboard/.env.local
+.env.local

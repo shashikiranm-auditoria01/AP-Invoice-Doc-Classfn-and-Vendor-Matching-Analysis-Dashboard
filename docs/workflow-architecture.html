@@ -1,0 +1,2552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>AP Invoice Analytics — End-to-End Workflow</title>
+<style>
+  @font-face {
+    font-family: 'SystemDisplay';
+    src: local('SF Pro Display'), local('Inter'), local('Segoe UI'), local('system-ui');
+  }
+
+  :root {
+    --surface-0: #F5F6F8;
+    --surface-1: #FFFFFF;
+    --surface-2: #EDF0F5;
+    --text-1: #1B2033;
+    --text-2: #4A5068;
+    --text-3: #7C8299;
+    --border: #D4D9E4;
+    --border-light: #E8EBF0;
+
+    --phase-pull: #6C5CE7;
+    --phase-pull-bg: #F0EDFD;
+    --phase-pull-border: #D6D0F7;
+    --phase-process: #0984E3;
+    --phase-process-bg: #E8F4FD;
+    --phase-process-border: #B8DCFA;
+    --phase-display: #00B894;
+    --phase-display-bg: #E6F9F4;
+    --phase-display-border: #A8E6CF;
+    --phase-review: #E17055;
+    --phase-review-bg: #FDF0ED;
+    --phase-review-border: #F5C8BB;
+    --phase-export: #636E72;
+    --phase-export-bg: #F0F1F2;
+    --phase-export-border: #D5D8DA;
+
+    --accent: #2A78D6;
+    --accent-bg: #EBF3FC;
+
+    --concept: #7A5AF8;
+    --concept-bg: #F0EDFE;
+    --concept-border: #D8CFFB;
+
+    --code-bg: #F7F8FA;
+    --code-border: #E2E6ED;
+    --code-text: #374151;
+
+    color-scheme: light dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface-0: #111318;
+      --surface-1: #1A1D25;
+      --surface-2: #22262F;
+      --text-1: #E8EAF0;
+      --text-2: #A0A5B8;
+      --text-3: #6B7190;
+      --border: #2E3340;
+      --border-light: #262B36;
+
+      --phase-pull-bg: #1E1A30;
+      --phase-pull-border: #3D3460;
+      --phase-process-bg: #131E2D;
+      --phase-process-border: #1F3A5C;
+      --phase-display-bg: #112A22;
+      --phase-display-border: #1B4536;
+      --phase-review-bg: #2A1A16;
+      --phase-review-border: #4D2F26;
+      --phase-export-bg: #1C1E21;
+      --phase-export-border: #3A3E44;
+
+      --accent-bg: #17233A;
+
+      --concept: #A594F9;
+      --concept-bg: #1C1733;
+      --concept-border: #362B5C;
+
+      --code-bg: #171A22;
+      --code-border: #2A2F3A;
+      --code-text: #C4CAD8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --surface-0: #111318;
+    --surface-1: #1A1D25;
+    --surface-2: #22262F;
+    --text-1: #E8EAF0;
+    --text-2: #A0A5B8;
+    --text-3: #6B7190;
+    --border: #2E3340;
+    --border-light: #262B36;
+    --phase-pull-bg: #1E1A30;
+    --phase-pull-border: #3D3460;
+    --phase-process-bg: #131E2D;
+    --phase-process-border: #1F3A5C;
+    --phase-display-bg: #112A22;
+    --phase-display-border: #1B4536;
+    --phase-review-bg: #2A1A16;
+    --phase-review-border: #4D2F26;
+    --phase-export-bg: #1C1E21;
+    --phase-export-border: #3A3E44;
+    --accent-bg: #17233A;
+    --concept: #A594F9;
+    --concept-bg: #1C1733;
+    --concept-border: #362B5C;
+    --code-bg: #171A22;
+    --code-border: #2A2F3A;
+    --code-text: #C4CAD8;
+  }
+  :root[data-theme="light"] {
+    --surface-0: #F5F6F8;
+    --surface-1: #FFFFFF;
+    --surface-2: #EDF0F5;
+    --text-1: #1B2033;
+    --text-2: #4A5068;
+    --text-3: #7C8299;
+    --border: #D4D9E4;
+    --border-light: #E8EBF0;
+    --phase-pull-bg: #F0EDFD;
+    --phase-pull-border: #D6D0F7;
+    --phase-process-bg: #E8F4FD;
+    --phase-process-border: #B8DCFA;
+    --phase-display-bg: #E6F9F4;
+    --phase-display-border: #A8E6CF;
+    --phase-review-bg: #FDF0ED;
+    --phase-review-border: #F5C8BB;
+    --phase-export-bg: #F0F1F2;
+    --phase-export-border: #D5D8DA;
+    --accent-bg: #EBF3FC;
+    --concept: #7A5AF8;
+    --concept-bg: #F0EDFE;
+    --concept-border: #D8CFFB;
+    --code-bg: #F7F8FA;
+    --code-border: #E2E6ED;
+    --code-text: #374151;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--surface-0);
+    color: var(--text-1);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 2rem 1rem 3rem; }
+  }
+
+  /* ─── Header ─── */
+  .header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-eyebrow {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .header h1 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.85rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-1);
+    text-wrap: balance;
+    margin-bottom: 0.75rem;
+  }
+  .header-meta {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.82rem;
+    color: var(--text-3);
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .header-meta span { white-space: nowrap; }
+
+  /* ─── Pipeline overview ─── */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    margin-bottom: 3rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .pipeline-stage {
+    flex: 1;
+    min-width: 140px;
+    position: relative;
+    text-align: center;
+    padding: 1rem 0.75rem;
+  }
+  .pipeline-stage::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid var(--border);
+    z-index: 1;
+  }
+  .pipeline-stage:last-child::after { display: none; }
+  .pipeline-num {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+  .pipeline-label {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-1);
+  }
+  .pipeline-sub {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-3);
+    margin-top: 0.2rem;
+  }
+
+  .stage-pull { background: var(--phase-pull-bg); border: 1px solid var(--phase-pull-border); border-radius: 6px 0 0 6px; }
+  .stage-pull .pipeline-num { color: var(--phase-pull); }
+  .stage-process { background: var(--phase-process-bg); border: 1px solid var(--phase-process-border); border-top: 1px solid var(--phase-process-border); border-bottom: 1px solid var(--phase-process-border); }
+  .stage-process .pipeline-num { color: var(--phase-process); }
+  .stage-display { background: var(--phase-display-bg); border: 1px solid var(--phase-display-border); }
+  .stage-display .pipeline-num { color: var(--phase-display); }
+  .stage-review { background: var(--phase-review-bg); border: 1px solid var(--phase-review-border); }
+  .stage-review .pipeline-num { color: var(--phase-review); }
+  .stage-export { background: var(--phase-export-bg); border: 1px solid var(--phase-export-border); border-radius: 0 6px 6px 0; }
+  .stage-export .pipeline-num { color: var(--phase-export); }
+
+  /* ─── Sections ─── */
+  .section {
+    margin-bottom: 2.5rem;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .section-marker {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .marker-pull { background: var(--phase-pull-bg); color: var(--phase-pull); border: 1px solid var(--phase-pull-border); }
+  .marker-process { background: var(--phase-process-bg); color: var(--phase-process); border: 1px solid var(--phase-process-border); }
+  .marker-display { background: var(--phase-display-bg); color: var(--phase-display); border: 1px solid var(--phase-display-border); }
+  .marker-review { background: var(--phase-review-bg); color: var(--phase-review); border: 1px solid var(--phase-review-border); }
+  .marker-export { background: var(--phase-export-bg); color: var(--phase-export); border: 1px solid var(--phase-export-border); }
+  .marker-concept { background: var(--concept-bg); color: var(--concept); border: 1px solid var(--concept-border); }
+  .marker-vendor { background: var(--phase-pull-bg); color: var(--phase-pull); border: 1px solid var(--phase-pull-border); }
+  .marker-data { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+
+  .section h2 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.15rem;
+    font-weight: 650;
+    color: var(--text-1);
+  }
+  .section h3 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .section p {
+    font-size: 0.95rem;
+    color: var(--text-2);
+    margin-bottom: 0.75rem;
+    max-width: 68ch;
+  }
+  .section p:last-child { margin-bottom: 0; }
+
+  /* ─── Step list ─── */
+  .steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 1rem 0;
+  }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.92rem;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.05em;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .steps-pull li::before { background: var(--phase-pull-bg); color: var(--phase-pull); border: 1px solid var(--phase-pull-border); }
+  .steps-process li::before { background: var(--phase-process-bg); color: var(--phase-process); border: 1px solid var(--phase-process-border); }
+  .steps-display li::before { background: var(--phase-display-bg); color: var(--phase-display); border: 1px solid var(--phase-display-border); }
+  .steps-review li::before { background: var(--phase-review-bg); color: var(--phase-review); border: 1px solid var(--phase-review-border); }
+  .steps-export li::before { background: var(--phase-export-bg); color: var(--phase-export); border: 1px solid var(--phase-export-border); }
+
+  /* ─── Code blocks ─── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--code-text);
+    white-space: pre;
+    tab-size: 2;
+  }
+  .code-label {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 0.35rem;
+  }
+
+  /* ─── Tables ─── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    background: var(--surface-2);
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    padding: 0.6rem 0.85rem;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-2);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .mono {
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-size: 0.78em;
+    color: var(--code-text);
+  }
+
+  /* ─── Info cards ─── */
+  .info-card {
+    background: var(--accent-bg);
+    border: 1px solid var(--phase-process-border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .info-card p {
+    font-size: 0.88rem;
+    color: var(--text-2);
+    margin: 0;
+  }
+  .info-card strong {
+    color: var(--text-1);
+    font-weight: 600;
+  }
+
+  /* ─── Flow diagram (CSS-only) ─── */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 1.25rem 0;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .flow-node {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+  .flow-rail {
+    width: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .flow-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid;
+    flex-shrink: 0;
+    margin-top: 0.65rem;
+  }
+  .flow-line {
+    flex: 1;
+    width: 2px;
+    min-height: 0.5rem;
+  }
+  .flow-content {
+    flex: 1;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+  .flow-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-1);
+    margin-bottom: 0.15rem;
+  }
+  .flow-desc {
+    font-size: 0.75rem;
+    color: var(--text-3);
+    line-height: 1.45;
+  }
+
+  .flow-pull .flow-dot { border-color: var(--phase-pull); background: var(--phase-pull-bg); }
+  .flow-pull .flow-line { background: var(--phase-pull-border); }
+  .flow-process .flow-dot { border-color: var(--phase-process); background: var(--phase-process-bg); }
+  .flow-process .flow-line { background: var(--phase-process-border); }
+  .flow-display .flow-dot { border-color: var(--phase-display); background: var(--phase-display-bg); }
+  .flow-display .flow-line { background: var(--phase-display-border); }
+
+  /* ─── Divider ─── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Inline tag ─── */
+  .tag {
+    display: inline-block;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    vertical-align: middle;
+  }
+  .tag-file { background: var(--phase-pull-bg); color: var(--phase-pull); border: 1px solid var(--phase-pull-border); }
+  .tag-api { background: var(--phase-process-bg); color: var(--phase-process); border: 1px solid var(--phase-process-border); }
+  .tag-table { background: var(--phase-display-bg); color: var(--phase-display); border: 1px solid var(--phase-display-border); }
+  .tag-ui { background: var(--phase-review-bg); color: var(--phase-review); border: 1px solid var(--phase-review-border); }
+
+  /* ─── Part divider ─── */
+  .part-divider {
+    margin: 3.5rem 0 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+  }
+  .part-eyebrow {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--concept);
+    margin-bottom: 0.4rem;
+  }
+  .part-divider h2 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-1);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+  .part-divider p {
+    font-size: 0.95rem;
+    color: var(--text-2);
+    margin-top: 0.6rem;
+    max-width: 68ch;
+  }
+
+  /* ─── Record-type pills ─── */
+  .rt-pill {
+    display: inline-block;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.18rem 0.55rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .rt-invoice { background: var(--phase-process-bg); color: var(--phase-process); border: 1px solid var(--phase-process-border); }
+  .rt-others { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+  .rt-credit { background: var(--phase-review-bg); color: var(--phase-review); border: 1px solid var(--phase-review-border); }
+
+  /* ─── Concept cards ─── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+    margin: 1.25rem 0;
+  }
+  .concept-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+  }
+  .concept-card.accent-vendor { border-top: 3px solid var(--phase-pull); }
+  .concept-card.accent-concept { border-top: 3px solid var(--concept); }
+  .concept-card.accent-process { border-top: 3px solid var(--phase-process); }
+  .concept-card-title {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 0.15rem;
+  }
+  .concept-card-sub {
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-size: 0.68rem;
+    color: var(--text-3);
+    margin-bottom: 0.6rem;
+  }
+  .concept-card-body {
+    font-size: 0.82rem;
+    color: var(--text-2);
+    line-height: 1.55;
+  }
+
+  /* ─── Decision rules ─── */
+  .rule {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.7rem 0.9rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .rule-yes { background: var(--phase-review-bg); border: 1px solid var(--phase-review-border); }
+  .rule-no { background: var(--phase-display-bg); border: 1px solid var(--phase-display-border); }
+  .rule-verdict {
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+  .verdict-issue { background: var(--phase-review); color: #fff; }
+  .verdict-ok { background: var(--phase-display); color: #fff; }
+  .rule-text { color: var(--text-2); }
+  .rule-text strong { color: var(--text-1); }
+
+  /* ─── Callout (why we pull) ─── */
+  .why-card {
+    background: var(--concept-bg);
+    border: 1px solid var(--concept-border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .why-card p { font-size: 0.88rem; color: var(--text-2); margin: 0; }
+  .why-card strong { color: var(--text-1); }
+
+  /* ─── Architecture diagram ─── */
+  .arch { display: flex; flex-direction: column; margin: 1.5rem 0; }
+  .arch-layer { display: grid; grid-template-columns: 96px 1fr; gap: 0.7rem; align-items: stretch; }
+  .arch-rail {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    border-radius: 7px; padding: 0.5rem 0.35rem;
+    font-family: system-ui, -apple-system, sans-serif; font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.3;
+  }
+  .rail-source    { background: var(--phase-pull-bg);    color: var(--phase-pull);    border: 1px solid var(--phase-pull-border); }
+  .rail-extract   { background: var(--phase-process-bg); color: var(--phase-process); border: 1px solid var(--phase-process-border); }
+  .rail-artifacts { background: var(--concept-bg);       color: var(--concept);       border: 1px solid var(--concept-border); }
+  .rail-dashboard { background: var(--phase-display-bg); color: var(--phase-display); border: 1px solid var(--phase-display-border); }
+  .rail-output    { background: var(--phase-review-bg);  color: var(--phase-review);  border: 1px solid var(--phase-review-border); }
+  .arch-body { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .arch-node {
+    flex: 1 1 200px; min-width: 175px;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.7rem 0.85rem;
+  }
+  .arch-node-title { font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 0.83rem; color: var(--text-1); margin-bottom: 0.1rem; }
+  .arch-node-sub { font-family: 'SF Mono','Cascadia Code',monospace; font-size: 0.64rem; color: var(--text-3); margin-bottom: 0.4rem; word-break: break-all; }
+  .arch-node-body { font-size: 0.76rem; color: var(--text-2); line-height: 1.5; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+  .chip {
+    font-family: 'SF Mono','Cascadia Code',monospace; font-size: 0.62rem;
+    padding: 0.12rem 0.42rem; border-radius: 3px;
+    background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border-light); white-space: nowrap;
+  }
+  .arch-conn { display: flex; align-items: center; gap: 0.6rem; margin: 0.35rem 0; padding-left: 96px; }
+  .arch-conn::before, .arch-conn::after { content: ''; height: 1px; flex: 1; background: var(--border); }
+  .arch-conn span {
+    font-family: system-ui, -apple-system, sans-serif; font-size: 0.66rem; color: var(--text-3);
+    display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap;
+  }
+  .arch-conn span::after { content: '▼'; font-size: 0.58rem; }
+
+  /* ─── Workflow swimlanes ─── */
+  .wf { display: flex; flex-direction: column; gap: 0.5rem; margin: 1.5rem 0; }
+  .wf-lane { display: grid; grid-template-columns: 116px 1fr; gap: 0.7rem; align-items: center; }
+  .wf-lane-label {
+    border-radius: 7px; padding: 0.6rem 0.5rem; text-align: center; line-height: 1.3;
+    font-family: system-ui, -apple-system, sans-serif; font-size: 0.7rem; font-weight: 700;
+  }
+  .lane-runtime  { background: var(--phase-pull-bg);    color: var(--phase-pull);    border: 1px solid var(--phase-pull-border); }
+  .lane-analytics{ background: var(--phase-display-bg); color: var(--phase-display); border: 1px solid var(--phase-display-border); }
+  .wf-steps { display: flex; flex-wrap: wrap; gap: 0.55rem 0; align-items: stretch; }
+  .wf-step {
+    position: relative; flex: 1 1 0; min-width: 116px; margin-right: 18px;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.5rem 0.65rem;
+  }
+  .wf-step:last-child { margin-right: 0; }
+  .wf-step::after {
+    content: ''; position: absolute; right: -18px; top: 50%; transform: translateY(-50%);
+    border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 9px solid var(--border);
+  }
+  .wf-step:last-child::after { display: none; }
+  .wf-step-n { font-family: system-ui, -apple-system, sans-serif; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.15rem; }
+  .lane-runtime-n { color: var(--phase-pull); }
+  .lane-analytics-n { color: var(--phase-display); }
+  .wf-step-t { font-family: system-ui, -apple-system, sans-serif; font-size: 0.78rem; font-weight: 600; color: var(--text-1); line-height: 1.25; }
+  .wf-step-d { font-size: 0.68rem; color: var(--text-3); line-height: 1.4; margin-top: 0.15rem; }
+  .wf-bridge {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.3rem 0; margin-left: 116px;
+    font-family: system-ui, -apple-system, sans-serif; font-size: 0.68rem; color: var(--text-3);
+  }
+  .wf-bridge::before, .wf-bridge::after { content: ''; height: 1px; width: 40px; background: var(--border); }
+
+  @media (max-width: 680px) {
+    .arch-layer, .wf-lane { grid-template-columns: 1fr; }
+    .arch-conn, .wf-bridge { padding-left: 0; margin-left: 0; }
+    .arch-node, .wf-step { flex-basis: 100%; margin-right: 0; }
+    .wf-step::after { display: none; }
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 680px) {
+    .pipeline { flex-direction: column; gap: 2px; }
+    .pipeline-stage { border-radius: 4px !important; }
+    .pipeline-stage::after { display: none; }
+    .header h1 { font-size: 1.45rem; }
+  }
+</style>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-eyebrow">Auditoria AI &middot; Internal Reference</div>
+    <h1>AP Invoice Analytics<br>Workflow &amp; Data Guide</h1>
+    <div class="header-meta">
+      <span>Doc Classification &amp; Vendor 2.1</span>
+      <span>Target Tenant: 674288818571972608</span>
+      <span>July 2026</span>
+    </div>
+  </div>
+
+  <!-- Pipeline overview -->
+  <div class="pipeline">
+    <div class="pipeline-stage stage-pull">
+      <div class="pipeline-num">Phase 1</div>
+      <div class="pipeline-label">Data Pull</div>
+      <div class="pipeline-sub">Metabase SQL</div>
+    </div>
+    <div class="pipeline-stage stage-process">
+      <div class="pipeline-num">Phase 2</div>
+      <div class="pipeline-label">Processing</div>
+      <div class="pipeline-sub">Python post-proc</div>
+    </div>
+    <div class="pipeline-stage stage-display">
+      <div class="pipeline-num">Phase 3</div>
+      <div class="pipeline-label">Dashboard</div>
+      <div class="pipeline-sub">React + Vite</div>
+    </div>
+    <div class="pipeline-stage stage-review">
+      <div class="pipeline-num">Phase 4</div>
+      <div class="pipeline-label">Review</div>
+      <div class="pipeline-sub">Human annotation</div>
+    </div>
+    <div class="pipeline-stage stage-export">
+      <div class="pipeline-num">Phase 5</div>
+      <div class="pipeline-label">Export</div>
+      <div class="pipeline-sub">Styled Excel</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- ARCHITECTURE DIAGRAM -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="part-divider">
+    <div class="part-eyebrow">System at a Glance</div>
+    <h2>Architecture</h2>
+    <p>
+      Five layers, top to bottom: the SOR databases behind two Metabase instances, the Python extractors,
+      the Excel artifacts they emit, the browser dashboard that consumes them, and the styled export that
+      comes back out. Data flows downward; each arrow names the transport.
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="arch">
+
+      <!-- Layer 1: Source -->
+      <div class="arch-layer">
+        <div class="arch-rail rail-source">Source</div>
+        <div class="arch-body">
+          <div class="arch-node">
+            <div class="arch-node-title">Metabase — Regular</div>
+            <div class="arch-node-sub">metabase.auditoria.ai</div>
+            <div class="arch-node-body">Fronts the standard SOR / shard databases.</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">Metabase — Enterprise</div>
+            <div class="arch-node-sub">metabase-ent1.auditoria.ai</div>
+            <div class="arch-node-body">Enterprise tenant shards (DB 6 prioritized, DB 18 appended).</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">SOR / shard databases</div>
+            <div class="arch-node-sub">MySQL (JSON columns)</div>
+            <div class="arch-node-body">The tables every field is drawn from:</div>
+            <div class="chips">
+              <span class="chip">sor.wk_inst_result</span>
+              <span class="chip">sor.wk_result_edits</span>
+              <span class="chip">sor.hints</span>
+              <span class="chip">sor.system_hints</span>
+              <span class="chip">sor.master_sor</span>
+              <span class="chip">sor.entity</span>
+              <span class="chip">tenant.tenant</span>
+              <span class="chip">conversation.message_intent_audit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"><span>session token &middot; native SQL via /api/dataset</span></div>
+
+      <!-- Layer 2: Extract -->
+      <div class="arch-layer">
+        <div class="arch-rail rail-extract">Extract</div>
+        <div class="arch-body">
+          <div class="arch-node">
+            <div class="arch-node-title">ap_invoice_data.py</div>
+            <div class="arch-node-sub">main extractor (v5)</div>
+            <div class="arch-node-body">Per-tenant probe → fetch → vendor-JSON update → SOR bulk-match → date formatting.</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">ap_invoice_mismatch_data.py</div>
+            <div class="arch-node-sub">mismatch extractor</div>
+            <div class="arch-node-body">Drives from <code>wk_result_edits</code>; keeps only customer-edited written records.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"><span>openpyxl &middot; writes .xlsx</span></div>
+
+      <!-- Layer 3: Artifacts -->
+      <div class="arch-layer">
+        <div class="arch-rail rail-artifacts">Artifacts</div>
+        <div class="arch-body">
+          <div class="arch-node">
+            <div class="arch-node-title">AP_Invoice_&lt;tenant&gt;.xlsx</div>
+            <div class="arch-node-sub">1 sheet &middot; 38 columns</div>
+            <div class="arch-node-body">Full document set with vendor names, classification, and SOR match columns.</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">AP_Invoice_Mismatch_Report.xlsx</div>
+            <div class="arch-node-sub">2 sheets &middot; 44 columns</div>
+            <div class="arch-node-body">RecordType_Mismatch + VendorName_Mismatch (AAI vs Customer).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"><span>drag-drop upload &middot; XLSX.read + parseDocClassificationRow</span></div>
+
+      <!-- Layer 4: Dashboard -->
+      <div class="arch-layer">
+        <div class="arch-rail rail-dashboard">Dashboard</div>
+        <div class="arch-body">
+          <div class="arch-node">
+            <div class="arch-node-title">Analysis tab</div>
+            <div class="arch-node-sub">DocClassificationPage</div>
+            <div class="arch-node-body">PDF viewer + review panel, 12 filters, PDF↔S3 matching.</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">Reviewed tab</div>
+            <div class="arch-node-sub">ReviewedPage</div>
+            <div class="arch-node-body">All reviewed docs, 8 filters, two exports (reviewed-only + full data).</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">Metrics tab</div>
+            <div class="arch-node-sub">DocClassificationMetricsPage</div>
+            <div class="arch-node-body">Key metrics, live-updating as documents are reviewed.</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-title">State &amp; persistence</div>
+            <div class="arch-node-sub">React 19 · Vite :5175</div>
+            <div class="arch-node-body">AppContext in memory; reviews in browser localStorage. No backend.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"><span>xlsx-js-style &middot; styled workbook</span></div>
+
+      <!-- Layer 5: Output -->
+      <div class="arch-layer">
+        <div class="arch-rail rail-output">Output</div>
+        <div class="arch-body">
+          <div class="arch-node">
+            <div class="arch-node-title">Reviewed Excel export</div>
+            <div class="arch-node-sub">color-coded column groups</div>
+            <div class="arch-node-body">"Reviewed only" or "All with reviewed" — annotations + computed status columns.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>Planned — Attachment API (AWS/DB):</strong> today PDFs are matched from a ZIP upload. The
+        integration point <code>src/services/attachmentService.ts</code> is scaffolded so a document's PDF can
+        instead be pulled from a backend on demand. Contract:
+        <code>GET {VITE_ATTACHMENT_API_URL}/attachments?s3Key=&lt;doc S3 key&gt;</code> → <code>application/pdf</code>;
+        the backend resolves the S3 bucket/key from the DB and streams the object. When
+        <code>VITE_ATTACHMENT_API_URL</code> is set, a <em>Fetch from server</em> button appears in the PDF pane
+        and the fetched file is named to match the document's S3 UUID so the viewer resolves it automatically.
+        Non-breaking: hidden when unconfigured.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- WORKFLOW DIAGRAM -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="part-divider">
+    <div class="part-eyebrow">Two Planes, One Timeline</div>
+    <h2>Workflow</h2>
+    <p>
+      The workflow spans two planes. The <strong>runtime plane</strong> is what happens to a document inside
+      Auditoria in production. The <strong>analytics plane</strong> is what this tool does afterward — pulling
+      that history back out and auditing it. The analytics pull reads the record the runtime plane wrote.
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="wf">
+
+      <div class="wf-lane">
+        <div class="wf-lane-label lane-runtime">Runtime<br>(Auditoria)</div>
+        <div class="wf-steps">
+          <div class="wf-step">
+            <div class="wf-step-n lane-runtime-n">1 · Ingest</div>
+            <div class="wf-step-t">Classify</div>
+            <div class="wf-step-d">session.originalRecordType set</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-runtime-n">2 · Resolve</div>
+            <div class="wf-step-t">Vendor 2.1</div>
+            <div class="wf-step-d">hints → system_hints → master</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-runtime-n">3 · Write</div>
+            <div class="wf-step-t">To ERP</div>
+            <div class="wf-step-d">original_json snapshot (AAI)</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-runtime-n">4 · Edit</div>
+            <div class="wf-step-t">Customer corrects</div>
+            <div class="wf-step-d">final_json snapshot (truth)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-bridge">analytics pull reads the written record &amp; edit history &darr;</div>
+
+      <div class="wf-lane">
+        <div class="wf-lane-label lane-analytics">Analytics<br>(this tool)</div>
+        <div class="wf-steps">
+          <div class="wf-step">
+            <div class="wf-step-n lane-analytics-n">5 · Pull</div>
+            <div class="wf-step-t">Metabase SQL</div>
+            <div class="wf-step-d">probe DB, per-tenant fetch</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-analytics-n">6 · Process</div>
+            <div class="wf-step-t">Python post-proc</div>
+            <div class="wf-step-d">SOR bulk-match, 38 cols → xlsx</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-analytics-n">7 · Upload</div>
+            <div class="wf-step-t">Dashboard</div>
+            <div class="wf-step-d">parse, auto-review, filter</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-analytics-n">8 · Review</div>
+            <div class="wf-step-t">Human annotate</div>
+            <div class="wf-step-d">classification + vendor verdict</div>
+          </div>
+          <div class="wf-step">
+            <div class="wf-step-n lane-analytics-n">9 · Export</div>
+            <div class="wf-step-t">Styled Excel</div>
+            <div class="wf-step-d">reviewed / all</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- PART A: DOMAIN CONCEPTS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="part-divider">
+    <div class="part-eyebrow">The Two Questions This Pipeline Answers</div>
+    <h2>What the Data Means</h2>
+    <p>
+      Before the mechanics, the semantics. Every AP invoice document we pull is graded on two independent
+      questions: <strong>Did we classify the document correctly?</strong> (Doc Classification) and
+      <strong>Did we resolve the vendor to the right master record?</strong> (Vendor 2.1). But both questions
+      rest on one underlying idea — the difference between what <strong>Auditoria produced</strong> and what
+      the <strong>customer ended up with</strong>. That's the record lifecycle, and it's where every "Original"
+      and "Final" value comes from.
+    </p>
+  </div>
+
+  <!-- ─── Concept 0: Record Lifecycle / Original vs Final ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-concept">Foundation</span>
+      <h2>The Record Lifecycle: Original vs. Final Values</h2>
+    </div>
+
+    <p>
+      Every field prefixed "Original" or "Final" — and every "mismatch" the dashboard reports — traces to
+      <strong>two source tables</strong> and the JSON blobs inside them. Understanding these is the key to the
+      whole dataset.
+    </p>
+
+    <h3>Table 1 — <span class="mono">sor.wk_inst_result</span> (alias <span class="mono">a</span>): the work-instruction result</h3>
+    <p>
+      One row per processed document. It carries two JSON blobs that represent two moments in time:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Blob / Column</th><th>Moment</th><th>Fields we extract</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">a.session</td>
+            <td><strong>Processing-time</strong> — the context captured when the document was first ingested and classified.</td>
+            <td><code>originalRecordType</code> → <strong>Original Record Type</strong>; <code>messages[0]</code> → Message ID; attachment keys/filenames → S3 locations.</td>
+          </tr>
+          <tr>
+            <td class="mono">a.record</td>
+            <td><strong>Live / current</strong> — the record as it stands now, after any downstream correction.</td>
+            <td><code>recordType</code> → <strong>Final Record Type</strong>; <code>vendorName</code> → <strong>vendorname (final)</strong>; <code>vendorId</code>, <code>invoiceNumber</code>, <code>dismissedComment</code>.</td>
+          </tr>
+          <tr>
+            <td class="mono">a.write_status / a.active / a.isManualEntry</td>
+            <td>Status flags on the row itself.</td>
+            <td>Written (0/1), On UI (Dismissed/Active), Manual (Bot/Manual).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      So within this one table, <strong>Original Record Type</strong> (from <code>session</code>) vs
+      <strong>Final Record Type</strong> (from <code>record</code>) already tells you whether the document's
+      classification changed between ingestion and now.
+    </p>
+
+    <h3>Table 2 — <span class="mono">sor.wk_result_edits</span> (alias <span class="mono">swre</span>): the edit diff</h3>
+    <p>
+      A row exists here <strong>only when a written record was edited</strong>. It stores a before/after snapshot
+      as two full JSON documents — this is the literal "original value / final value" pair:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Blob / Column</th><th>Represents</th><th>Fields we extract</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="mono">swre.original_json</td>
+            <td><strong>What Auditoria AI wrote</strong> to the ERP — the machine's answer (the <em>normalized / SOR-resolved</em> values, not raw extractions).</td>
+            <td><code>recordType</code> → <strong>AAI RecordType</strong>; <code>vendorName</code> → <strong>OriginalVendorName</strong> (= the normalized vendor name AAI resolved to).</td>
+          </tr>
+          <tr>
+            <td class="mono">swre.final_json</td>
+            <td><strong>What the record became after a human edit</strong> — the customer's correction (ground truth).</td>
+            <td><code>recordType</code> → <strong>Customer RecordType</strong>; <code>vendorName</code> → <strong>Customer vendorName</strong>; <code>aaiEntityId</code> → joins <code>sor.entity</code>.</td>
+          </tr>
+          <tr>
+            <td class="mono">swre.wk_result_id / message_id / tenant_id</td>
+            <td>Links the edit back to the result row and the edit event.</td>
+            <td>FK to <code>a.id</code>; <strong>Edit Message ID</strong>; tenant scope.</td>
+          </tr>
+          <tr>
+            <td class="mono">sor.entity.entity_name</td>
+            <td>Which customer entity made the edit (joined via <code>final_json.aaiEntityId</code>).</td>
+            <td><strong>customer entity_name</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>Critical consequence:</strong> <code>OriginalVendorName</code> comes from
+        <code>swre.original_json</code>, not from <code>wk_inst_result</code>. If a document was never edited,
+        there is <em>no</em> edit row — so <code>OriginalVendorName</code> is <strong>NULL</strong> and Vendor
+        Match Status reads <em>"No Original Data."</em> In the real Ochsner/GA/Coleman pull, 90% of rows had an
+        edit record (OriginalVendorName populated); 10% did not.
+      </p>
+    </div>
+
+    <h3>The Lifecycle, End to End</h3>
+    <div class="flow">
+      <div class="flow-node flow-pull">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">1. Ingest &amp; Classify</div>
+          <div class="flow-desc"><code>a.session.originalRecordType</code> is set — the classifier's first prediction (<strong>Original Record Type</strong>).</div>
+        </div>
+      </div>
+      <div class="flow-node flow-process">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">2. Resolve Vendor &amp; Write</div>
+          <div class="flow-desc">AAI resolves the vendor and writes the record. That written snapshot is captured in <code>swre.original_json</code> → <strong>AAI RecordType</strong> + <strong>OriginalVendorName</strong>.</div>
+        </div>
+      </div>
+      <div class="flow-node flow-review">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">3. Customer Edits</div>
+          <div class="flow-desc">A human corrects the record. The corrected snapshot lands in <code>swre.final_json</code> → <strong>Customer RecordType</strong> + <strong>Customer vendorName</strong>, tagged with the editing <strong>entity</strong>.</div>
+        </div>
+      </div>
+      <div class="flow-node flow-display">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line" style="background:transparent;"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">4. Live State</div>
+          <div class="flow-desc">The edit propagates to <code>a.record</code> → <strong>Final Record Type</strong> + final <strong>vendorname</strong>. This is what the customer sees today.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>The Two "Original vs Final" Comparisons</h3>
+    <p>
+      Because there are two source tables, there are two distinct diffs — don't conflate them:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Comparison</th><th>Original side</th><th>Final side</th><th>What it detects</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Classification drift</strong></td>
+            <td class="mono">session.originalRecordType</td>
+            <td class="mono">record.recordType</td>
+            <td>Record type changed between ingestion and the live record.</td>
+          </tr>
+          <tr>
+            <td><strong>Edit diff (mismatch)</strong></td>
+            <td class="mono">original_json (AAI wrote)</td>
+            <td class="mono">final_json (customer edited)</td>
+            <td>A human overrode what AAI produced — the true accuracy signal.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Mismatch Detection Premise</h3>
+    <p>
+      The mismatch script keeps only rows where AAI's write was <em>written</em> and then <em>overridden</em>:
+    </p>
+    <div class="code-block">WHERE a.write_status = 1                                          -- AAI actually wrote it
+  AND swre.tenant_id = '<tenant>'  AND (date range on swre)
+  AND ( swre.original_json->>'$.recordType'  != swre.final_json->>'$.recordType'   -- record type edited
+     OR swre.original_json->>'$.vendorName'  != a.record->>'$.vendorName' )        -- vendor name edited</div>
+    <p>
+      Output splits into two sheets — <strong>RecordType_Mismatch</strong> and <strong>VendorName_Mismatch</strong>
+      (a row can be in both). Real examples from the June pull:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Type</th><th>AAI wrote (Original)</th><th>Customer changed to (Final)</th><th>Extracted from doc</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="rt-pill rt-others">Others</span> → <span class="rt-pill rt-invoice">Invoice</span></td>
+            <td>Others</td>
+            <td>Invoice</td>
+            <td>— (AAI under-classified a real invoice)</td>
+          </tr>
+          <tr>
+            <td>Vendor</td>
+            <td>Onesourcehearing</td>
+            <td>Starkey Hearing Technologies</td>
+            <td class="mono">Starkey</td>
+          </tr>
+          <tr>
+            <td>Vendor</td>
+            <td>Ascension Water Company</td>
+            <td>Louisiana Water Company</td>
+            <td class="mono">Ascension Water Company</td>
+          </tr>
+          <tr>
+            <td>Vendor</td>
+            <td>Datex-Ohmeda</td>
+            <td>GE Medical Systems Ultrasound…</td>
+            <td class="mono">GE Medical Systems Ultrasound…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>What the vendor examples reveal:</strong> for "Onesourcehearing," the raw
+        <code>ExtractedVendorName</code> was "Starkey" — <em>closer to the customer's correct answer</em> than
+        the resolved <code>OriginalVendorName</code>. The SOR resolution step
+        <em>replaced a good extraction with a wrong master mapping</em>. In the real pull this is common:
+        <strong>68%</strong> of rows had <code>Normalized ≠ Extracted</code> (resolution altered the name), and
+        <strong>94%</strong> of edited rows had <code>OriginalVendorName == NormalizedVendorName</code> —
+        confirming AAI writes the SOR-resolved name, so a bad hint/system-hint directly becomes a mismatch.
+      </p>
+    </div>
+  </div>
+
+  <!-- ─── Document Classification Guidelines ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-concept">Concept A</span>
+      <h2>Document Classification: Invoice / Others / VB_CREDIT_MEMO</h2>
+    </div>
+
+    <p>
+      When a document arrives, Auditoria's classifier assigns it a <strong>record type</strong>. For AP invoice
+      processing there are three outcomes that matter. The reviewer's job is to confirm the classifier got it right.
+    </p>
+
+    <div class="concept-grid">
+      <div class="concept-card accent-process">
+        <div class="concept-card-title"><span class="rt-pill rt-invoice">Invoice</span></div>
+        <div class="concept-card-sub">recordType = "Invoice"</div>
+        <div class="concept-card-body">
+          A payable invoice — a vendor billing the customer for goods/services. This is the document type that
+          flows into the AP write pipeline and gets a vendor resolved against the master SOR. The overwhelming
+          majority of documents (~88% in production data).
+        </div>
+      </div>
+      <div class="concept-card accent-concept">
+        <div class="concept-card-title"><span class="rt-pill rt-credit">VB_CREDIT_MEMO</span></div>
+        <div class="concept-card-sub">recordType = "VB_CREDIT_MEMO"</div>
+        <div class="concept-card-body">
+          A vendor credit memo — money owed back to the customer (returns, overbilling adjustments). It is
+          <em>correctly</em> a non-invoice document. This distinction drives the single most important
+          review exception (see below).
+        </div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-title"><span class="rt-pill rt-others">Others</span></div>
+        <div class="concept-card-sub">recordType = "Others"</div>
+        <div class="concept-card-body">
+          Anything that is not a payable invoice — statements, packing slips, remittance advices, spam, or
+          unclassifiable pages. These should not enter the invoice write path.
+        </div>
+      </div>
+    </div>
+
+    <h3>Original vs. Final Record Type</h3>
+    <p>
+      Two record-type columns are pulled for every document, and the gap between them is the core signal:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Column</th><th>Meaning</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Original Record Type</strong></td>
+            <td>What Auditoria's model assigned when the document first arrived — the AI's own prediction, untouched.</td>
+            <td class="mono">a.session &rarr; $.originalRecordType</td>
+          </tr>
+          <tr>
+            <td><strong>Final Record Type</strong></td>
+            <td>What the record type is <em>now</em> in the live record — may reflect a customer/agent correction after the fact.</td>
+            <td class="mono">a.record &rarr; $.recordType</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      When Original ≠ Final, the customer (or an agent) re-classified the document after we processed it — a
+      strong indicator that our original prediction was wrong. This is exactly what the mismatch script isolates.
+    </p>
+
+    <h3>The Review Question &amp; the Issue Rule</h3>
+    <p>
+      In the dashboard the reviewer answers one question — <strong>"Is an Invoice?"</strong> → <em>Invoice</em>
+      or <em>Others</em>. From that selection, the <strong>Doc Classification Issue</strong> flag is
+      auto-computed by comparing the reviewer's verdict against the base record type
+      (<code>originalRecordType</code>, falling back to <code>finalRecordType</code> when the original is blank):
+    </p>
+
+    <div class="rule rule-no">
+      <span class="rule-verdict verdict-ok">No Issue</span>
+      <span class="rule-text">Reviewer says <strong>Others</strong> and the base type is <strong>VB_CREDIT_MEMO</strong> — the explicit exception. A credit memo is <em>correctly</em> not an invoice, so marking it "Others" is right, not a misclassification.</span>
+    </div>
+    <div class="rule rule-yes">
+      <span class="rule-verdict verdict-issue">Issue = Yes</span>
+      <span class="rule-text">Reviewer says <strong>Invoice</strong> but the base type is <strong>not</strong> "Invoice" — we under-classified a real invoice.</span>
+    </div>
+    <div class="rule rule-yes">
+      <span class="rule-verdict verdict-issue">Issue = Yes</span>
+      <span class="rule-text">Reviewer says <strong>Others</strong> but the base type is <strong>not</strong> "Others" (and not the VB_CREDIT_MEMO exception) — we mis-flagged a non-invoice as something payable.</span>
+    </div>
+    <div class="rule rule-no">
+      <span class="rule-verdict verdict-ok">No Issue</span>
+      <span class="rule-text">Reviewer's verdict agrees with the base record type — the classifier was correct.</span>
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>Why the VB_CREDIT_MEMO exception exists:</strong> Reviewers naturally mark a credit memo as
+        "Others" (it isn't an invoice). Without the exception, every correctly-handled credit memo would be
+        counted as a classification error, poisoning the accuracy metric. The rule at
+        <code>DocClassificationDetailsPanel.tsx</code> encodes this: <em>Others + VB_CREDIT_MEMO → No Issue</em>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ─── Vendor Name Resolution ─── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-vendor">Concept B</span>
+      <h2>Vendor Name Resolution (Vendor 2.1)</h2>
+    </div>
+
+    <p>
+      For every invoice we must answer: <strong>which master vendor record does this document belong to?</strong>
+      A document says "Thermo Fisher Scientific"; the customer's books call that vendor "Fisher Healthcare". Vendor
+      2.1 is the resolution engine that bridges the two. To audit it, we pull <strong>four different
+      representations</strong> of the vendor name and the <strong>reason</strong> the engine landed where it did.
+    </p>
+
+    <h3>The Four Vendor Name Fields</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>What it is</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ExtractedVendorName</strong></td>
+            <td>The raw vendor name lifted straight off the document by the extraction model — as-printed, messy.</td>
+            <td class="mono">mia.intent &rarr; extractedInfo.Fields[vendorname].Value</td>
+          </tr>
+          <tr>
+            <td><strong>NormalizedVendorName</strong></td>
+            <td>The extracted name after canonicalization (casing, punctuation, legal-suffix cleanup) — the form used for matching.</td>
+            <td class="mono">…Fields[vendorname].NormalizedValue</td>
+          </tr>
+          <tr>
+            <td><strong>OriginalVendorName</strong></td>
+            <td>The value AAI/NLU actually <em>wrote</em> to the ERP at processing time — i.e. the
+              <strong>normalized / SOR-resolved</strong> name, <strong>not</strong> the raw extraction.
+              "Original" means "AAI's original write, before any customer edit" — the value itself is the
+              normalized one (in the real pull it equals <code>NormalizedVendorName</code> ~94% of the time).</td>
+            <td class="mono">swre.original_json &rarr; $.vendorName</td>
+          </tr>
+          <tr>
+            <td><strong>vendorname</strong> (final)</td>
+            <td>The vendor name in the live record <em>now</em> — reflects any customer correction. Final ≠ Original = a vendor mismatch.</td>
+            <td class="mono">a.record &rarr; $.vendorName</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flow">
+      <div class="flow-node flow-pull">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">Extract</div>
+          <div class="flow-desc">The extraction model reads the vendor name off the PDF → <strong>ExtractedVendorName</strong> (e.g. "ACME CORP").</div>
+        </div>
+      </div>
+      <div class="flow-node flow-process">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">Normalize</div>
+          <div class="flow-desc">Clean and canonicalize → <strong>NormalizedVendorName</strong> (e.g. "Acme Corp"). This is the value matched against the SOR sources.</div>
+        </div>
+      </div>
+      <div class="flow-node flow-display">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">Resolve against SOR</div>
+          <div class="flow-desc">Match the normalized name against three System-of-Record sources in priority order (hints → system_hints → master). The winning source and criteria are recorded as <strong>VendorNameReason</strong>.</div>
+        </div>
+      </div>
+      <div class="flow-node flow-display">
+        <div class="flow-rail"><div class="flow-dot"></div><div class="flow-line" style="background:transparent;"></div></div>
+        <div class="flow-content">
+          <div class="flow-title">Write</div>
+          <div class="flow-desc">The resolved vendor becomes <strong>OriginalVendorName</strong>. If a customer later changes it, the live <strong>vendorname</strong> diverges → flagged as a Vendor Mismatch.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>The Three System-of-Record (SOR) Sources</h3>
+    <p>
+      Resolution consults three tenant-scoped tables. Each has a distinct role, and <code>VendorNameReason</code>
+      tells you which one won:
+    </p>
+
+    <div class="concept-grid">
+      <div class="concept-card accent-vendor">
+        <div class="concept-card-title">sor.hints</div>
+        <div class="concept-card-sub">tenant-configured rules</div>
+        <div class="concept-card-body">
+          Human/tenant-curated matching hints: acceptable alias names, billing/supplier address patterns,
+          currency, phone. The most authoritative source — a deterministic, configured mapping.
+          <br><br>
+          <strong>Key columns:</strong> <code>vendor_name</code>, <code>acceptable_name</code>,
+          <code>active_hints</code> (which criteria are on), <code>address</code>.
+        </div>
+      </div>
+      <div class="concept-card accent-vendor">
+        <div class="concept-card-title">sor.system_hints</div>
+        <div class="concept-card-sub">system-learned mappings</div>
+        <div class="concept-card-body">
+          Mappings the system learned automatically from past write history — "last time we saw this extracted
+          name, it resolved to this vendor." Captures <code>extracted_name</code> →
+          <code>initial_vendor_name</code> → <code>final_vendor_name</code> chains.
+          <br><br>
+          <strong>Key columns:</strong> <code>extracted_name</code>, <code>initial_vendor_name</code>,
+          <code>final_vendor_name</code>, <code>write_status</code>.
+        </div>
+      </div>
+      <div class="concept-card accent-vendor">
+        <div class="concept-card-title">sor.master_sor</div>
+        <div class="concept-card-sub">the canonical vendor registry</div>
+        <div class="concept-card-body">
+          The customer's master vendor list — the source of truth for who a vendor <em>is</em>. Every resolved
+          invoice should point at an active row here. "Exists in mast_sor" in the review form asks exactly this.
+          <br><br>
+          <strong>Key columns:</strong> <code>coalesced_name</code> (canonical vendor name),
+          <code>status</code> (active/inactive), <code>address1</code>/<code>address2</code>.
+        </div>
+      </div>
+    </div>
+
+    <h3>VendorNameReason — the Resolution Verdict</h3>
+    <p>
+      This single field encodes <em>how</em> the vendor was resolved. Its prefix names the winning source; the
+      suffix names the criteria and match strength. Real values from production data:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Reason prefix</th><th>Meaning</th><th>SOR tables consulted</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">fromSystemHints</td>
+            <td>Resolved from a system-learned mapping. Most common in production (~46%). <code>::ambiguousEntity</code> suffix = multiple candidates existed.</td>
+            <td><code>sor.system_hints</code> + <code>sor.master_sor</code></td>
+          </tr>
+          <tr>
+            <td class="mono">withLLM</td>
+            <td>No deterministic hint matched; an LLM resolved the vendor against the master registry (~22%).</td>
+            <td><code>sor.master_sor</code></td>
+          </tr>
+          <tr>
+            <td class="mono">withHints::…::exactMatch</td>
+            <td>Matched a configured hint. The middle segment lists the criteria that fired — e.g. <code>acceptableNames+billContains+billingAddress+supplierAddress</code>.</td>
+            <td><code>sor.hints</code> + <code>sor.master_sor</code></td>
+          </tr>
+          <tr>
+            <td class="mono">withHints::acceptableNames::legacyExactName</td>
+            <td>Matched an acceptable-name alias via the legacy exact-name path.</td>
+            <td><code>sor.hints</code> + <code>sor.master_sor</code></td>
+          </tr>
+          <tr>
+            <td class="mono">noMatchWithHintsLLM</td>
+            <td>Neither hints nor LLM could resolve the vendor — needs manual attention.</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>Why the dashboard re-matches locally:</strong> The reason tells you the engine's verdict, but
+        not <em>which specific SOR rows</em> support it. So post-processing takes the Extracted and Normalized
+        names and re-runs the match against each tenant's <code>sor.hints</code>, <code>sor.master_sor</code>,
+        and <code>sor.system_hints</code> tables — populating six columns with the top-10 matching rows. The
+        reviewer sees the actual candidate records side-by-side with the document, and can confirm whether the
+        chosen vendor is right.
+      </p>
+    </div>
+
+    <h3>The Vendor 2.1 Review Verdict</h3>
+    <p>
+      After inspecting the four names, the reason, and the SOR candidates, the reviewer records:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Values</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vendor 2.1 Matching Issue</td>
+            <td>Does not Exist / Vendor Matching Issue / (none)</td>
+            <td>"Does not Exist" = vendor isn't in master SOR yet; "Vendor Matching Issue" = matched to the wrong vendor.</td>
+          </tr>
+          <tr>
+            <td>Exists in mast_sor</td>
+            <td>Yes / No</td>
+            <td>Whether the resolved vendor has an active row in <code>sor.master_sor</code>.</td>
+          </tr>
+          <tr>
+            <td>Expected Vendor Name</td>
+            <td>free text</td>
+            <td>The correct vendor name, when the reviewer disagrees with the resolution.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      These vendor fields are <strong>disabled when "Is an Invoice" = Others</strong> — vendor resolution is only
+      meaningful for actual invoices.
+    </p>
+  </div>
+
+  <div class="part-divider">
+    <div class="part-eyebrow">How the Data Gets Here</div>
+    <h2>The Pipeline</h2>
+    <p>
+      With the semantics established, here is the machinery that produces those fields — from the Metabase pull
+      through processing, the dashboard, review, and export.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 1: DATA PULL -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-pull">Phase 1</span>
+      <h2>Data Pull from Metabase</h2>
+    </div>
+
+    <p>
+      The extraction script <span class="tag tag-file">ap_invoice_data.py</span> connects to two Metabase instances
+      (Regular + Enterprise) and runs tenant-isolated SQL against the SOR database shards. A separate script
+      <span class="tag tag-file">ap_invoice_mismatch_data.py</span> pulls records where the customer changed
+      AAI's original classification or vendor name.
+    </p>
+
+    <h3>Architecture</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Instance</th><th>URL</th><th>Purpose</th><th>DB Selection</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Regular</td>
+            <td class="mono">metabase.auditoria.ai</td>
+            <td>Primary SOR databases</td>
+            <td>Auto-filter for names containing <code>sor</code> or <code>shard</code></td>
+          </tr>
+          <tr>
+            <td>Enterprise</td>
+            <td class="mono">metabase-ent1.auditoria.ai</td>
+            <td>Enterprise tenant shards</td>
+            <td>DB 6 prioritized; DB 18 force-appended</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Two-Step Tenant Discovery</h3>
+
+    <ol class="steps steps-pull">
+      <li>
+        <strong>DB Discovery (Probe):</strong> For each tenant ID, a fast <code>COUNT(*)</code> query runs against every database
+        on every instance, filtering by <code>tenant.tenant.id</code> within the configured date range.
+        The first database returning count > 0 is cached as that tenant's DB location.
+      </li>
+      <li>
+        <strong>Per-Tenant Fetch:</strong> The full SQL template runs once per tenant against its discovered DB.
+        Date range and tenant ID are injected via string replacement of <code>DATE_FROM_PLACEHOLDER</code>,
+        <code>DATE_TO_PLACEHOLDER</code>, and <code>TENANT_PLACEHOLDER</code>.
+      </li>
+    </ol>
+
+    <h3>Core SQL Query</h3>
+    <p>
+      The main query joins five tables to assemble each document's full context:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Table</th><th>Alias</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">sor.wk_inst_result</td>
+            <td class="mono">a</td>
+            <td>Primary AP invoice records (the work-instruction results)</td>
+          </tr>
+          <tr>
+            <td class="mono">tenant.tenant</td>
+            <td class="mono">t</td>
+            <td>Tenant metadata, filtered to <code>type='customer'</code> and <code>sandbox='0'</code></td>
+          </tr>
+          <tr>
+            <td class="mono">conversation.message</td>
+            <td class="mono">m</td>
+            <td>Linked via <code>session.messages[0]</code> JSON path</td>
+          </tr>
+          <tr>
+            <td class="mono">conversation.message_intent_audit</td>
+            <td class="mono">mia</td>
+            <td>Intent/extraction data for app_def_code <code>VIDE</code></td>
+          </tr>
+          <tr>
+            <td class="mono">sor.wk_result_edits</td>
+            <td class="mono">swre</td>
+            <td>Edit history — original vs. final JSON for vendor/record type changes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Key Output Columns (37 total)</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Group</th><th>Columns</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Identity</td>
+            <td>Document ID, Message ID, Tenant Name/ID</td>
+            <td><code>a.id</code>, JSON extract, <code>t.name</code>/<code>t.id</code></td>
+          </tr>
+          <tr>
+            <td>Status</td>
+            <td>On UI, Written, Manual</td>
+            <td>CASE on <code>a.active</code>, <code>a.write_status</code>, <code>a.isManualEntry</code></td>
+          </tr>
+          <tr>
+            <td>Classification</td>
+            <td>Final Record Type, Original Record Type</td>
+            <td>JSON from <code>a.record</code> and <code>a.session</code></td>
+          </tr>
+          <tr>
+            <td>Vendor Names</td>
+            <td>vendorname (final), OriginalVendorName, ExtractedVendorName, NormalizedVendorName</td>
+            <td><code>a.record</code>, <code>swre.original_json</code>, JSON_TABLE from <code>mia.intent</code></td>
+          </tr>
+          <tr>
+            <td>Classification AI</td>
+            <td>doc_classification_json, vendorname_json, VendorNameReason</td>
+            <td>JSON from <code>mia.intent</code> (LSTM model output + extraction fields)</td>
+          </tr>
+          <tr>
+            <td>Match Status</td>
+            <td>Vendor Match Status, 4 cross-match columns</td>
+            <td>CASE comparing final vs original vendor names, LIKE substring checks</td>
+          </tr>
+          <tr>
+            <td>File Refs</td>
+            <td>attachmentFileName, extractedFileS3Location, S3Location</td>
+            <td>JSON from <code>a.session</code> attachment paths</td>
+          </tr>
+          <tr>
+            <td>Email</td>
+            <td>recipient_email, sender_email</td>
+            <td><code>mia.intent</code> To/From fields</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Async Query Handling</h3>
+    <p>
+      Metabase may return HTTP 202 for long-running queries. The script polls
+      <code>/api/dataset/query_key/{qk}</code> every 5 seconds for up to 60 attempts (5 minutes).
+      If a <code>via[].status == 'failed'</code> is detected, it aborts early.
+    </p>
+
+    <h3>Mismatch Script Differences</h3>
+    <p>
+      <span class="tag tag-file">ap_invoice_mismatch_data.py</span> drives from <code>sor.wk_result_edits</code>
+      instead of <code>sor.wk_inst_result</code> and applies an additional WHERE filter:
+    </p>
+    <div class="code-block">WHERE a.write_status = 1   -- only Written records
+  AND (swre.original_json->>'$.recordType' != swre.final_json->>'$.recordType'
+       OR swre.original_json->>'$.vendorName' != a.record->>'$.vendorName')</div>
+    <p>
+      Output splits into two Excel sheets: <strong>RecordType_Mismatch</strong> and
+      <strong>VendorName_Mismatch</strong>, with extra columns for Edit Message ID,
+      customer entity_name, AAI RecordType, and Customer RecordType/VendorName.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 2: PROCESSING -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-process">Phase 2</span>
+      <h2>Post-Processing Pipeline</h2>
+    </div>
+
+    <p>
+      After combining all tenant DataFrames (deduped by Document ID, sorted by <code>created_at</code> DESC),
+      four transformations run in sequence:
+    </p>
+
+    <div class="flow">
+      <div class="flow-node flow-pull">
+        <div class="flow-rail">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <div class="flow-title">1. Vendor Name JSON Update</div>
+          <div class="flow-desc">
+            Parses <code>vendorname_json</code> for each row. If any entry's Value or NormalizedValue
+            is a case-insensitive substring of <code>OriginalVendorName</code>, it overwrites
+            ExtractedVendorName and NormalizedVendorName with the matched entry's values.
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-node flow-process">
+        <div class="flow-rail">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <div class="flow-title">2. Date Formatting</div>
+          <div class="flow-desc">
+            Converts <code>created_at</code> and <code>updated_at</code> to human-readable format:
+            "July 08, 2026, 3:45 PM".
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-node flow-process">
+        <div class="flow-rail">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <div class="flow-title">3. SOR Matching (Bulk Fetch + Local Match)</div>
+          <div class="flow-desc">
+            The heaviest step. For each tenant, determines which <code>sor.*</code> tables are needed
+            based on VendorNameReason values in the data, bulk-fetches those tables once, then matches
+            every row locally using a Python reimplementation of MySQL's <code>LIKE '%value%'</code>.
+            Adds 6 new JSON columns with top-10 matches from sor.hints, sor.master_sor, and sor.system_hints.
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-node flow-display">
+        <div class="flow-rail">
+          <div class="flow-dot"></div>
+          <div class="flow-line" style="background: transparent;"></div>
+        </div>
+        <div class="flow-content">
+          <div class="flow-title">4. JSON Date Formatting</div>
+          <div class="flow-desc">
+            For the 6 SOR matching columns, parses embedded JSON arrays and reformats any
+            <code>created_at</code>/<code>updated_at</code> keys within objects to the human-readable format.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>SOR Matching Logic by VendorNameReason</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Reason</th><th>Tables Fetched</th><th>Match Targets</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">withHints</td>
+            <td><code>sor.hints</code> + <code>sor.master_sor</code></td>
+            <td>Match against <code>hints._match_data</code> (full JSON) and <code>master_sor.coalesced_name</code></td>
+          </tr>
+          <tr>
+            <td class="mono">withLLM</td>
+            <td><code>sor.master_sor</code></td>
+            <td>Match against <code>master_sor.coalesced_name</code> only</td>
+          </tr>
+          <tr>
+            <td class="mono">fromSystemHints</td>
+            <td><code>sor.system_hints</code> + <code>sor.master_sor</code></td>
+            <td>Match across <code>extracted_name</code>, <code>initial_vendor_name</code>, <code>final_vendor_name</code> in system_hints; plus <code>master_sor.coalesced_name</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Excel Output Format</h3>
+    <p>
+      The final DataFrame (37 original + 6 SOR columns = 43 columns) is written to an <code>.xlsx</code>
+      file using openpyxl. ID columns (Document ID, Tenant ID, Message ID, vendorid) are cast to integer
+      strings with text formatting (<code>'@'</code>) to prevent Excel scientific notation. If total rows
+      exceed 5,000, data splits across multiple sheets (<code>Data_Part_1</code>, <code>Data_Part_2</code>, etc.).
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 3: DASHBOARD -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-display">Phase 3</span>
+      <h2>Dashboard Upload &amp; Display</h2>
+    </div>
+
+    <p>
+      The React + Vite dashboard <span class="tag tag-ui">localhost:5174</span> accepts the Excel output
+      and renders it as an interactive document-by-document review interface. The dataset lives in memory for
+      the session; reviewed-document annotations persist to browser localStorage.
+    </p>
+
+    <h3>Application Architecture</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Frontend</td>
+            <td>React 19 + TypeScript + Tailwind CSS</td>
+            <td>SPA with tab navigation (Analysis / Reviewed / Metrics)</td>
+          </tr>
+          <tr>
+            <td>State</td>
+            <td>React Context (AppContext)</td>
+            <td>Single context for all shared state — no Redux</td>
+          </tr>
+          <tr>
+            <td>Persistence</td>
+            <td>Browser localStorage</td>
+            <td>Reviewed documents persist in the browser across refreshes; upload/PDFs held in memory for the session</td>
+          </tr>
+          <tr>
+            <td>Charts</td>
+            <td>Recharts</td>
+            <td>Vendor volume bars, accuracy distributions</td>
+          </tr>
+          <tr>
+            <td>Tables</td>
+            <td>TanStack React Table</td>
+            <td>Sortable, scrollable data tables with column visibility</td>
+          </tr>
+          <tr>
+            <td>PDF</td>
+            <td>react-pdf / pdfjs-dist</td>
+            <td>Canvas-based PDF rendering with image fallback</td>
+          </tr>
+          <tr>
+            <td>Excel</td>
+            <td>xlsx + xlsx-js-style</td>
+            <td>Parse uploads, generate styled exports</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Three Dashboard Tabs</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tab</th><th>Component</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Analysis</strong></td>
+            <td class="mono">DocClassificationPage</td>
+            <td>Split-view: 55% PDF viewer (left) + 45% details/review panel (right). Document-by-document review with 12 filter dimensions, PDF-document matching via S3 UUID, and Mark/Skip/Update workflow.</td>
+          </tr>
+          <tr>
+            <td><strong>Reviewed</strong></td>
+            <td class="mono">ReviewedPage</td>
+            <td>All reviewed documents in one scrollable, color-coded table. Search + 8 filters (tenant, Invoice/Others, classification issue, vendor 2.1 issue, exists-in-mast_sor, record status, vendor match status, auto/manual). Two exports: <em>Export Reviewed</em> (respects filters) and <em>Export Full Data (with reviewed)</em>.</td>
+          </tr>
+          <tr>
+            <td><strong>Metrics</strong></td>
+            <td class="mono">DocClassificationMetricsPage</td>
+            <td>Key overall metrics that update <strong>live as documents are reviewed</strong> — review progress, classification changes (Invoice↔Others), vendor changes, vendor-match distribution, and review findings (issues, exists-in-mast_sor).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-3);margin-top:0.5rem;">
+      The former Metabase SQL tab has been removed from the dashboard. (Data is still pulled from Metabase upstream by the Python extractors — that is the Source layer, not an in-app tab.) Persistence is browser localStorage only; there is no backend.
+    </p>
+
+    <h3>Excel Upload Flow</h3>
+
+    <ol class="steps steps-display">
+      <li>User drops <code>.xlsx</code> file(s) into the ExcelUploader modal (supports drag-and-drop, multiple files).</li>
+      <li>All sheets are read; column names are normalized case-insensitively against the known 37-column schema.</li>
+      <li>Each row is parsed through <code>parseDocClassificationRow()</code> — dates, JSON columns, Yes/No fields, and SOR columns are all typed.</li>
+      <li>If a <code>Reviewed</code> column exists (resume file), reviewed documents and their review data are extracted.</li>
+      <li>
+        <strong>Auto-suggestion (not auto-save):</strong> Eligible documents — <code>finalRecordType == 'Invoice'</code>
+        AND <code>originalRecordType == 'Invoice'</code> AND <code>originalVendorName</code> matches a name in any SOR column —
+        get their review form <strong>pre-filled</strong> (<code>isAnInvoice: 'Invoice'</code>, <code>vendor21MatchingIssue: 'Does not Exist'</code>,
+        <code>existsInMastSor: 'Yes'</code>) and a banner appears. Nothing is saved until the reviewer clicks <strong>Mark &amp; Next</strong> —
+        so every reviewed document is human-confirmed, and accuracy metrics reflect real human judgment.
+      </li>
+      <li>Parsed documents are held in AppContext state; reviews persist to browser localStorage as you work.</li>
+    </ol>
+
+    <h3>PDF-Document Matching</h3>
+    <p>
+      When a ZIP of PDFs is uploaded, documents are matched by comparing the UUID extracted from
+      the PDF filename (e.g., <code>924b0482-f146-11f0-b3cd-b7a39ee49af9.pdf</code>) against the
+      last path segment of each document's S3 location. Only matched documents appear in the review queue
+      when PDFs are loaded.
+    </p>
+
+    <h3>12 Filter Dimensions</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Filter</th><th>Values</th><th>Mode</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Vendor Name</td><td>All unique vendor names</td><td>Include/Exclude toggle</td></tr>
+          <tr><td>Vendor Match Status</td><td>Vendor Match / Vendor Mismatch / No Original Data</td><td>Multi-select</td></tr>
+          <tr><td>Record Match Status</td><td>Record Type Match / Record Type Mismatch</td><td>Multi-select</td></tr>
+          <tr><td>Final Record Type</td><td>Invoice, VB_CREDIT_MEMO, etc.</td><td>Multi-select</td></tr>
+          <tr><td>Original Record Type</td><td>Same values</td><td>Multi-select</td></tr>
+          <tr><td>Manual</td><td>Bot / Manual</td><td>Multi-select</td></tr>
+          <tr><td>Written</td><td>Written / No</td><td>Multi-select</td></tr>
+          <tr><td>Tenant Name</td><td>All tenant names in dataset</td><td>Multi-select</td></tr>
+          <tr><td>On UI</td><td>Active / Dismissed</td><td>Multi-select</td></tr>
+          <tr><td>VendorNameReason</td><td>withHints / withLLM / fromSystemHints</td><td>Multi-select</td></tr>
+          <tr><td>Date Range</td><td>Start/end date pickers</td><td>Range filter on created_at</td></tr>
+          <tr><td>Review Status</td><td>Not Reviewed / User Reviewed / Skipped / All</td><td>Single select</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 4: REVIEW -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-review">Phase 4</span>
+      <h2>Human Review &amp; Annotation</h2>
+    </div>
+
+    <p>
+      The review interface is the core working surface. An analyst navigates documents one-by-one,
+      viewing the original PDF alongside all extracted data, classification results, and vendor matching details.
+    </p>
+
+    <h3>Details Panel Tabs</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tab</th><th>Content</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Details</strong></td>
+            <td>
+              Document identification, doc classification review (Is Invoice? / Expected Doc Type),
+              Vendor 2.1 analysis with 4 color-coded vendor name cards (Original/Final/Extracted/Normalized),
+              VendorNameReason explanation, SOR matching results (6 columns in expandable sections),
+              vendor review inputs (Matching Issue / Exists in mast_sor / Expected Vendor Name).
+            </td>
+          </tr>
+          <tr>
+            <td><strong>JSON Data</strong></td>
+            <td>Side-by-side view of doc classification JSON (classification, confidence, model, pages) and vendor name extraction JSON.</td>
+          </tr>
+          <tr>
+            <td><strong>Extracted Data</strong></td>
+            <td>Side-by-side extracted data display for deeper inspection.</td>
+          </tr>
+          <tr>
+            <td><strong>SOR Hints</strong></td>
+            <td>Dedicated view of SOR Hints lookup results (Normalized + Extracted) with column-specific explanations.</td>
+          </tr>
+          <tr>
+            <td><strong>Master SOR Record</strong></td>
+            <td>Dedicated view of SOR Master lookup results with address and status info.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Review Actions</h3>
+
+    <ol class="steps steps-review">
+      <li>
+        <strong>Mark &amp; Next:</strong> Saves the review (isAnInvoice, expectedDocType, vendor21MatchingIssue,
+        existsInMastSor, expectedVendorName, comments) and advances to the next unreviewed document.
+        Doc Classification Issue is auto-calculated by comparing <code>isAnInvoice</code> against <code>originalRecordType</code>.
+      </li>
+      <li>
+        <strong>Skip:</strong> Hides the document from the default review queue (session-level tracking, not persisted).
+      </li>
+      <li>
+        <strong>Auto-fill:</strong> When vendorMatchStatus is "match", originalRecordType is "Invoice", and
+        record types match, a one-click button fills "Invoice + Does not Exist + Yes".
+      </li>
+      <li>
+        <strong>Update &amp; Next:</strong> Available for already-reviewed documents when revisiting via the Reviewed sheet.
+      </li>
+    </ol>
+
+    <div class="info-card">
+      <p>
+        <strong>Special Case:</strong> VB_CREDIT_MEMO marked as "Others" is NOT flagged as a
+        Doc Classification Issue — this is an intentional exemption in the auto-calculation logic.
+      </p>
+    </div>
+
+    <h3>Persistence Strategy</h3>
+    <p>
+      Reviews are written to <strong>browser localStorage</strong> as you go — immediate and offline-safe, so
+      progress survives a refresh. The uploaded dataset and PDFs live in memory for the session. Nothing leaves
+      the browser; export is an explicit action.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- PHASE 5: EXPORT -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-export">Phase 5</span>
+      <h2>Export &amp; Reporting</h2>
+    </div>
+
+    <p>
+      The dashboard produces styled Excel files using xlsx-js-style with color-coded column groups:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Column Group</th><th>Count</th><th>Color</th><th>Content</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Original Data</td>
+            <td>24</td>
+            <td style="background: #fff; border: 1px solid var(--border);">White</td>
+            <td>Document ID through S3Location — raw Metabase data</td>
+          </tr>
+          <tr>
+            <td>JSON/SOR/Matching</td>
+            <td>13</td>
+            <td style="background: #FDF0ED;">Amber</td>
+            <td>doc_classification_json, vendorname_json, 6 SOR columns, 4 match columns</td>
+          </tr>
+          <tr>
+            <td>Review Annotations</td>
+            <td>8</td>
+            <td style="background: #E6F9F4;">Green</td>
+            <td>Is Invoice, Expected Doc Type, Classification Issue, Vendor Matching Issue, Expected Vendor Name, Exists in mast_sor, Reviewed At, Comments</td>
+          </tr>
+          <tr>
+            <td>Computed Status</td>
+            <td>2</td>
+            <td style="background: #E8F4FD;">Blue</td>
+            <td>Record Type Status (isAnInvoice vs originalRecordType), Vendor Match Status</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Two export modes: <strong>Download Reviewed Only</strong> (reviewed documents only, 47 columns) and
+      <strong>Download All</strong> (all documents with a Reviewed Yes/No indicator at column 37, 48 columns).
+      Per-value badge coloring mirrors the UI pill colors (Active=green, Dismissed=red, Invoice=blue, etc.).
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- FILE MAP -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <h2>File Reference Map</h2>
+    </div>
+
+    <h3>Data Pulling Scripts</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">AP_Invoice_Doc_Classfn_Vendor/ap_invoice_data.py</td>
+            <td>Main extractor — dual-instance Metabase, per-tenant fetch, SOR matching, Excel output</td>
+          </tr>
+          <tr>
+            <td class="mono">AP_Invoice_Doc_Classfn_Vendor/ap_invoice_mismatch_data.py</td>
+            <td>Mismatch analysis — finds customer-changed records, split into RecordType + VendorName sheets</td>
+          </tr>
+          <tr>
+            <td class="mono">sample_metabase_script.py</td>
+            <td>FastAPI web UI for ad-hoc Metabase queries with SSE streaming</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Frontend Dashboard</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">src/App.tsx</td>
+            <td>Root component — 3-tab navigation (Analysis / Reviewed / Metrics)</td>
+          </tr>
+          <tr>
+            <td class="mono">src/context/AppContext.tsx</td>
+            <td>Global state — doc data, reviewed docs, PDFs; localStorage persistence for reviews; auto-seeds tenant data on load</td>
+          </tr>
+          <tr>
+            <td class="mono">src/pages/DocClassificationPage.tsx</td>
+            <td>Main analysis page — split-view, 12 filters, review workflow</td>
+          </tr>
+          <tr>
+            <td class="mono">src/pages/ReviewedPage.tsx</td>
+            <td>Reviewed tab — filter bar (search + 8 filters) + two exports over the reviewed set</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/docClassification/ReviewedTable.tsx</td>
+            <td>Shared reviewed-documents table (used by the Reviewed tab and the in-analysis panel)</td>
+          </tr>
+          <tr>
+            <td class="mono">src/pages/DocClassificationMetricsPage.tsx</td>
+            <td>Metrics tab — key metrics, live-updating from reviews</td>
+          </tr>
+          <tr>
+            <td class="mono">src/utils/seedTenantData.ts</td>
+            <td>Dev auto-loader — seeds the bundled tenant dataset on startup (real parse + auto-review path)</td>
+          </tr>
+          <tr>
+            <td class="mono">src/utils/reviewStatus.ts</td>
+            <td>Single source of truth for vendor-match &amp; record-type status (used by page, table, panel, metrics, export)</td>
+          </tr>
+          <tr>
+            <td class="mono">src/services/attachmentService.ts</td>
+            <td>Integration point to fetch a PDF by S3 key from a future AWS/DB backend endpoint</td>
+          </tr>
+          <tr>
+            <td class="mono">src/services/emailService.ts</td>
+            <td>Compose (mailto) + real send via the email backend (<code>/api/send_email</code>, PDF as base64)</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/docClassification/EmailSenderModal.tsx</td>
+            <td>Full <strong>Email Sender</strong> (ported from the annotation tool) — opened by a dedicated "Email Sender" toolbar button. Two tabs: <em>AP Invoice</em> (select loaded PDFs → batch send with delay + real-time activity log) and <em>Helpdesk</em> (upload Excel/CSV + attachments → email queue → batch send).</td>
+          </tr>
+          <tr>
+            <td class="mono">email_backend.py</td>
+            <td>Flask email sender (ported from the annotation tool) — Gmail SMTP + PDF attachments; <code>/api/send_email</code> (AP Invoice) &amp; <code>/api/email/send-simple</code> (HelpDesk bulk). SMTP host configurable for testing.</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/docClassification/ExcelUploader.tsx</td>
+            <td>Excel parsing + auto-review + column normalization</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/docClassification/DocClassificationDetailsPanel.tsx</td>
+            <td>Document detail view + review form with 5 sub-tabs</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/docClassification/DocClassificationReviewedSheet.tsx</td>
+            <td>Reviewed documents table — 44+ column scrollable view</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/docClassification/DocClassificationMetrics.tsx</td>
+            <td>Inline metrics — accuracy tables sorted by worst performers</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/analysis/ZipHandler.tsx</td>
+            <td>ZIP upload + PDF extraction with header validation</td>
+          </tr>
+          <tr>
+            <td class="mono">src/components/analysis/PDFViewer.tsx</td>
+            <td>Canvas PDF renderer with zoom, rotation, image fallback</td>
+          </tr>
+          <tr>
+            <td class="mono">src/types/docClassification.ts</td>
+            <td>37-column type definitions + parsing functions</td>
+          </tr>
+          <tr>
+            <td class="mono">src/utils/docClassificationExport.ts</td>
+            <td>Styled Excel export with color-coded column groups</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Configuration</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File / Env var</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">vite.config.ts</td>
+            <td>Dev server on port 5174, Brotli + gzip compression, chunk splitting</td>
+          </tr>
+          <tr>
+            <td class="mono">package.json</td>
+            <td>Dependencies: React 19, xlsx / xlsx-js-style, pdfjs-dist, recharts, jszip</td>
+          </tr>
+          <tr>
+            <td class="mono">VITE_SEED_FILE / VITE_SEED_DISABLE</td>
+            <td>Override or turn off the startup seed dataset</td>
+          </tr>
+          <tr>
+            <td class="mono">VITE_ATTACHMENT_API_URL / VITE_ATTACHMENT_API_TOKEN</td>
+            <td>Future: base URL + optional bearer token for the AWS/DB attachment endpoint</td>
+          </tr>
+          <tr>
+            <td class="mono">VITE_EMAIL_BACKEND_URL</td>
+            <td>URL of the email backend (default <code>http://localhost:5001</code>) that the Send Email modal calls</td>
+          </tr>
+          <tr>
+            <td class="mono">MAIL_SMTP_HOST / MAIL_SMTP_PORT / MAIL_STARTTLS</td>
+            <td>Backend SMTP target — defaults to Gmail (<code>smtp.gmail.com:587</code>, STARTTLS); override to point at a local SMTP for testing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- METRICS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Metrics Tab — Key Overall Metrics</h2>
+    </div>
+
+    <p>
+      The Metrics tab replicates the annotation &amp; insights tool's <strong>"AP Vendor 2.1 Reviewed Metrics"</strong>
+      dashboard, mapped onto this tool's review data. Accuracy &amp; issue metrics are computed from
+      <strong>reviewed</strong> documents and recompute the moment a document is reviewed
+      (<span class="tag tag-ui">LIVE</span>); distributions &amp; trend cover the full dataset. Every number was
+      cross-checked against the source data. <strong>Accuracy &amp; issues count only human (manual) reviews</strong> —
+      an auto-review can never produce an "issue", so including it would pin accuracy at 100%. On the seed (190
+      auto-reviewed, 0 user-reviewed) the accuracies therefore read "—" until you review, then populate from your judgments.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Section</th><th>Computation</th><th>Live?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Total Documents</td><td>count of loaded documents</td><td>—</td></tr>
+          <tr><td>Reviewed Documents</td><td>reviewed ∩ dataset; subtitle = % completed</td><td><strong>LIVE</strong></td></tr>
+          <tr><td>Doc Classfn Accuracy</td><td>% of <strong>user-reviewed</strong> with <code>docClassificationIssue ≠ Yes</code> — shows "—" until you review (auto-reviews excluded, so they can't pin it at 100%)</td><td><strong>LIVE</strong></td></tr>
+          <tr><td>Vendor Matching Accuracy</td><td>% of <strong>user-reviewed</strong> with <code>vendor21MatchingIssue ≠ Vendor Matching Issue</code> — "—" until you review</td><td><strong>LIVE</strong></td></tr>
+          <tr><td>On UI Distribution (donut)</td><td>Active / Dismissed / Unknown across all docs</td><td>—</td></tr>
+          <tr><td>Write Status</td><td>Written vs No, count + % of all docs</td><td>—</td></tr>
+          <tr><td>Tenant-wise Breakdown</td><td>per-tenant Total Docs, Reviewed, Doc Classfn &amp; Vendor Matching accuracy</td><td><strong>LIVE</strong></td></tr>
+          <tr><td>Summary Statistics</td><td>per-tenant Doc Classification Issues &amp; Vendor Name Assignment Issues ("N of M reviewed")</td><td><strong>LIVE</strong></td></tr>
+          <tr><td>Doc Classification Weekly Trend</td><td>document count bucketed by Monday-start week of <code>created_at</code></td><td>—</td></tr>
+          <tr><td>Other Documents Classified as Invoice by AAI</td><td>reviewed docs where AAI said "Invoice" but reviewer marked "Others"</td><td><strong>LIVE</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-3);margin-top:0.5rem;">
+      Field-level edit metrics from the annotation tool (per-field edit rates, reversion rate, avg-edits-per-doc)
+      are intentionally omitted — this tool's data is decision-grained (one review per document), not field-edit-grained.
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- DATA DICTIONARY -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="part-divider">
+    <div class="part-eyebrow">Every Field We Retrieve</div>
+    <h2>Data Dictionary</h2>
+    <p>
+      The complete 38-column record pulled for tenant <span class="mono">674288818571972608</span> and every
+      other tenant. Grouped by the question each field serves.
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-data">Reference</span>
+      <h2>Column-by-Column</h2>
+    </div>
+
+    <h3>Identity &amp; Routing</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Document ID</td><td>Unique work-instruction result ID — the primary key, used for dedup and PDF matching.</td><td class="mono">a.id</td></tr>
+          <tr><td class="mono">Message ID</td><td>The conversation message that carried the document.</td><td class="mono">a.session.messages[0]</td></tr>
+          <tr><td class="mono">Tenant Name / Tenant ID</td><td>Which customer this document belongs to.</td><td class="mono">t.name / t.id</td></tr>
+          <tr><td class="mono">created_at / updated_at</td><td>When the record was created / last modified (human-formatted).</td><td class="mono">a.created_at / a.updated_at</td></tr>
+          <tr><td class="mono">recipient_email / sender_email</td><td>The To/From of the source email — provenance and vendor-domain cross-check.</td><td class="mono">mia.intent.To / .From</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Status</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">On UI</td><td><span class="rt-pill rt-invoice">Active</span> (visible in the customer's queue) or <span class="rt-pill rt-credit">Dismissed</span>.</td><td class="mono">CASE a.active</td></tr>
+          <tr><td class="mono">Reason for Dismissal</td><td>Free-text note when a document was dismissed.</td><td class="mono">a.record.dismissedComment</td></tr>
+          <tr><td class="mono">Written</td><td>Whether the record was written to the customer's ERP.</td><td class="mono">CASE a.write_status</td></tr>
+          <tr><td class="mono">Manual</td><td><em>Bot</em> (auto-processed) vs <em>Manual</em> (hand-entered).</td><td class="mono">CASE a.isManualEntry</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Classification (Concept A)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Final Record Type</td><td>Current record type in the live record.</td><td class="mono">a.record.recordType</td></tr>
+          <tr><td class="mono">Original Record Type</td><td>The classifier's original prediction.</td><td class="mono">a.session.originalRecordType</td></tr>
+          <tr><td class="mono">Invoice #</td><td>The extracted invoice number.</td><td class="mono">a.record.invoiceNumber</td></tr>
+          <tr><td class="mono">doc_classification_json</td><td>Full classifier output per page — model, confidence, languages, raw OCR text. (structure below)</td><td class="mono">mia.intent.s3Attachments…doc_classification</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Vendor Resolution (Concept B)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">vendorname</td><td>Final (live) vendor name.</td><td class="mono">a.record.vendorName</td></tr>
+          <tr><td class="mono">vendorid</td><td>Resolved vendor ID.</td><td class="mono">a.record.vendorId</td></tr>
+          <tr><td class="mono">OriginalVendorName</td><td>Vendor name AAI first wrote (the normalized/SOR-resolved value, ≈ NormalizedVendorName).</td><td class="mono">swre.original_json.vendorName</td></tr>
+          <tr><td class="mono">ExtractedVendorName</td><td>Raw name from the document.</td><td class="mono">mia.intent…Value</td></tr>
+          <tr><td class="mono">NormalizedVendorName</td><td>Canonicalized name used for matching.</td><td class="mono">mia.intent…NormalizedValue</td></tr>
+          <tr><td class="mono">VendorNameReason</td><td>How the vendor was resolved (see taxonomy above).</td><td class="mono">mia.intent…Reason</td></tr>
+          <tr><td class="mono">Vendor Match Status</td><td>Vendor Match / Vendor Mismatch / No Original Data — final vs original.</td><td class="mono">CASE comparison</td></tr>
+          <tr><td class="mono">vendorname_json</td><td>Full extraction object — confidence, fuzzy-match flags, namespace. (structure below)</td><td class="mono">JSON_ARRAYAGG of extractedInfo.Fields</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Match Flags &amp; SOR Lookups</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">normalized_matched_with_OriginalvendorName</td><td>Yes/No — is Normalized a substring of Original?</td></tr>
+          <tr><td class="mono">normalized_matched_with_finalvendorName</td><td>Yes/No — is Normalized a substring of the final vendorname?</td></tr>
+          <tr><td class="mono">Extracted_matched_with_OriginalvendorName</td><td>Yes/No — is Extracted a substring of Original?</td></tr>
+          <tr><td class="mono">Extraction_matched_with_finalvendorName</td><td>Yes/No — is Extracted a substring of final vendorname?</td></tr>
+          <tr><td class="mono">sor_hints_value_normalized_matched_…</td><td>Top-10 <code>sor.hints</code> rows matching the Normalized name.</td></tr>
+          <tr><td class="mono">sor_hints_value_Extracted_matched_…</td><td>Top-10 <code>sor.hints</code> rows matching the Extracted name.</td></tr>
+          <tr><td class="mono">sor_master_value_normalized_matched_…</td><td>Top-10 <code>sor.master_sor</code> rows matching Normalized.</td></tr>
+          <tr><td class="mono">sor_master_value_Extracted_matched_…</td><td>Top-10 <code>sor.master_sor</code> rows matching Extracted.</td></tr>
+          <tr><td class="mono">Systemhints_value_for_Normalized_VendorName</td><td>Top-10 <code>sor.system_hints</code> rows matching Normalized.</td></tr>
+          <tr><td class="mono">Systemhints_value_for_Extracted_VendorName</td><td>Top-10 <code>sor.system_hints</code> rows matching Extracted.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>File References</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">attachmentFileName / originalAttachmentFileName</td><td>The PDF filename as received.</td></tr>
+          <tr><td class="mono">extractedFileS3Location</td><td>Primary S3 path — the last segment is the UUID used to match the uploaded PDF.</td></tr>
+          <tr><td class="mono">S3Location</td><td>Fallback S3 path for the original attachment.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Mismatch-Report-Only Columns</h3>
+    <p>
+      The mismatch report (<code>ap_invoice_mismatch_data.py</code>) adds five columns sourced from the
+      edit diff — these do not appear in the main pull:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">AAI RecordType</td><td>Record type AAI wrote.</td><td class="mono">swre.original_json.recordType</td></tr>
+          <tr><td class="mono">Customer RecordType</td><td>Record type after customer edit.</td><td class="mono">swre.final_json.recordType</td></tr>
+          <tr><td class="mono">Customer vendorName</td><td>Vendor name after customer edit (ground truth).</td><td class="mono">swre.final_json.vendorName</td></tr>
+          <tr><td class="mono">customer entity_name</td><td>Which customer entity made the edit.</td><td class="mono">sor.entity via final_json.aaiEntityId</td></tr>
+          <tr><td class="mono">Edit Message ID</td><td>The edit event's message ID.</td><td class="mono">swre.message_id</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Embedded JSON Structures</h3>
+    <p>Three columns carry nested JSON. Their real shapes:</p>
+
+    <div class="code-label">doc_classification_json — per-page classifier output</div>
+    <div class="code-block">[{
+  "start_page": 1, "end_page": 1,
+  "prediction": {
+    "model": "LLM",              // or "LSTM"
+    "classification": "Invoice",  // the predicted record type
+    "confidence": 0.96,
+    "languages": { "English": 0.99 },
+    "raw_text": "…OCR text…",
+    "page1_text": "…full page text…",
+    "Reason": ""
+  }
+}]</div>
+
+    <div class="code-label">vendorname_json — extraction field object</div>
+    <div class="code-block">[{
+  "Name": "vendorName", "Type": "Name",
+  "Value": "Fisher Healthcare",            // → ExtractedVendorName
+  "NormalizedValue": "Fisher Healthcare",  // → NormalizedVendorName
+  "Reason": "withHints::acceptableNames+supplierAddress::exactMatch",
+  "Confidence": 0.9,
+  "FuzzyMatchEnabled": false,
+  "aaiNamespace": "invoice"
+}]</div>
+
+    <div class="code-label">SOR lookup rows — hints / master / system_hints (differing keys)</div>
+    <div class="code-block">// sor.hints              → vendor_name, acceptable_name, active_hints, address
+// sor.master_sor         → coalesced_name, status, address1, address2
+// sor.system_hints       → extracted_name, initial_vendor_name, final_vendor_name, write_status
+// common to all          → search_value_used, tenant_id, created_at, updated_at</div>
+
+    <div class="why-card">
+      <p>
+        <strong>Auto-suggestion eligibility:</strong> a document's form is pre-filled only when both record types
+        are "Invoice" <em>and</em> a SOR name field (coalesced_name / vendor_name / acceptable_name) matches
+        <code>OriginalVendorName</code>. This is a <strong>suggestion</strong> — it never saves on its own; the
+        reviewer confirms with Mark &amp; Next. So nothing is dispositioned automatically and accuracy reflects only human judgment.
+      </p>
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>Data-quality caveat:</strong> <code>doc_classification_json</code> is pulled via
+        <code>CAST(… AS CHAR(10000))</code> in SQL. On documents with long OCR text the JSON is truncated
+        mid-string and becomes unparseable. The dashboard's <code>parseJsonColumn</code> catches this and keeps
+        the <em>raw</em> string while setting the <em>parsed</em> value to null — so the JSON Data tab shows
+        nothing structured for those rows. The other JSON columns (vendorname_json, SOR columns) are not affected.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- VERIFICATION -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="part-divider">
+    <div class="part-eyebrow">Checked, Not Assumed</div>
+    <h2>Verification Against Real Data</h2>
+    <p>
+      The dashboard's actual TypeScript modules were executed headlessly against the real
+      Ochsner/GA/Coleman pull (2,817 rows), and each interactive component was traced by a dedicated
+      review agent. Concrete results below.
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-marker marker-data">Results</span>
+      <h2>Pipeline Execution &amp; Component Checks</h2>
+    </div>
+
+    <h3>Core Pipeline — real app code, real data</h3>
+    <p>
+      <code>parseDocClassificationRow</code> and <code>pdfMatcher</code> (the app's own compiled modules) were
+      run over all 2,817 rows:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Check</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>Rows parsed successfully</td><td><strong>2,817 / 2,817</strong> (0 dropped)</td></tr>
+          <tr><td>Valid <code>createdAt</code> dates</td><td><strong>2,817 / 2,817</strong></td></tr>
+          <tr><td>Rows with SOR match data</td><td>1,917</td></tr>
+          <tr><td>Rows with parsed vendor JSON</td><td>2,510</td></tr>
+          <tr><td>OriginalVendorName populated (edit exists)</td><td>2,528 / 2,817 (90%)</td></tr>
+          <tr><td>PDF filename ↔ S3-UUID round-trip</td><td><strong>PASS</strong></td></tr>
+          <tr><td>Doc classification accuracy (UI formula)</td><td>97.7% (2,752 / 2,817)</td></tr>
+          <tr><td>Vendor match accuracy (UI formula)</td><td>96.6% (2,721 / 2,817)</td></tr>
+          <tr><td>Unique tenants</td><td>4</td></tr>
+          <tr><td>Final record types</td><td>Invoice 2,487 · Others 260 · VB_CREDIT_MEMO 70</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Audit &amp; fixes — data-correctness sweep</h3>
+    <p>
+      A dedicated audit hunted for issues in the same class as the ID-display one (numeric coercion, unnormalized
+      comparisons, timezone math, status-definition drift). Findings and their resolution:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Issue</th><th>Status</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>Snowflake IDs looked rounded (synthetic seed used round bases)</td><td>✅ fixed</td><td>Seed regenerated with realistic distinct IDs; IDs handled as text everywhere (verified 250 distinct, 0 dup-key warnings).</td></tr>
+          <tr><td>Vendor Match/Mismatch badge used strict <code>===</code></td><td>✅ fixed</td><td>Normalized + source-column-aware, now 3-way (Match / Mismatch / No Original Data).</td></tr>
+          <tr><td>Auto-fill matched "No Match" via <code>includes('match')</code></td><td>✅ fixed</td><td>Exact normalized comparison against the status value.</td></tr>
+          <tr><td>Date-range filter off-by-one in negative-UTC zones</td><td>✅ fixed</td><td>Input parsed as a local calendar day, not UTC.</td></tr>
+          <tr><td>Vendor filter folded "No Original Data" into Mismatch</td><td>✅ fixed</td><td>3-way filter/options from the source column via a shared helper.</td></tr>
+          <tr><td>Record Type Status mislabeled credit memos as Mismatch</td><td>✅ fixed</td><td>Now compares final vs original record type (normalized), not the binary Invoice/Others choice.</td></tr>
+          <tr><td>"Does not Exist" shown as "Vendor Match" in computed column</td><td>✅ fixed</td><td>Dedicated <code>reviewVendorStatus</code> (verified live: shows "Does not Exist").</td></tr>
+          <tr><td>Three different "vendor match" definitions across views</td><td>✅ fixed</td><td>Single <code>src/utils/reviewStatus.ts</code> reused by page/table/panel/metrics/export.</td></tr>
+          <tr><td>Metrics: "No Match" counted as Match; progress could exceed 100%</td><td>✅ fixed</td><td>Uses the shared helper; reviews intersected with the loaded dataset.</td></tr>
+          <tr><td>Resume dropped Comments / Auto-Reviewed / reviewedAt</td><td>✅ fixed</td><td>Export adds an Auto-Reviewed column; resume reads Comments + flag + timestamp and preserves them.</td></tr>
+          <tr><td>Auto-review ignored hints/system-hints name fields</td><td>✅ fixed</td><td>Now checks coalesced_name / vendor_name / acceptable_name.</td></tr>
+          <tr><td>"Remaining" could go negative; within-batch dup IDs kept</td><td>✅ fixed</td><td>Count clamped &amp; intersected with dataset; upload dedupes within the batch.</td></tr>
+          <tr><td>Orphaned Metabase files after tab removal</td><td>✅ removed</td><td>Deleted MetabasePage + components/metabase/.</td></tr>
+          <tr><td><code>doc_classification_json</code> truncated at 10k by SQL CAST</td><td>⚠ upstream</td><td>Handled gracefully (raw kept, parsed null); fix belongs in the extractor's CAST width.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="why-card">
+      <p>
+        <strong>On tenant 674288818571972608:</strong> this tenant is not present in any existing export, so its
+        data requires a live Metabase pull (interactive credentials). A single-tenant pull script is ready
+        (<code>pull_tenant_674288818571972608.py</code>). For immediate end-to-end exercise, verification ran on
+        the real multi-tenant Ochsner/GA/Coleman pull, which shares the identical schema and pipeline.
+      </p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
