@@ -1,8 +1,7 @@
-# ── Dependencies & build output ──
-dashboard/node_modules/
-dashboard/dist/
-dashboard/.vite/
-node_modules/
+# ── Dependencies & build output (path-agnostic so nesting doesn't matter) ──
+**/node_modules/
+**/dist/
+**/.vite/
 
 # ── Python ──
 **/__pycache__/
@@ -21,10 +20,9 @@ Thumbs.db
 _e2e_*.mjs
 *.tmp
 
-# ── Local env overrides ──
-# NOTE: data-pipeline/.env is intentionally TRACKED as an empty template
-# (USERNAME/PASSWORD blank). Never commit real credentials into it.
-# Any OTHER .env (e.g. dashboard/.env.local) stays local:
-dashboard/.env
-dashboard/.env.local
-.env.local
+# ── Data & local env ──
+# .xlsx are ignored everywhere so real tenant/customer data is never committed.
+*.xlsx
+# The committed data-fetching .env is an EMPTY template. Any OTHER .env stays local:
+**/.env.local
+**/dashboard/.env
