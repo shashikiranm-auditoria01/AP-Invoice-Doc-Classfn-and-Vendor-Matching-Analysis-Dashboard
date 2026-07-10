@@ -130,7 +130,7 @@ export function DataGate() {
             {manifest && manifest.datasets.length === 0 && (
               <div className="flex items-start gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
-                <span>No datasets are bundled with this build. Run the data pipeline to generate one (see <code className="font-mono">data-pipeline/README.md</code>) and drop it into <code className="font-mono">public/data/</code>, or upload an Excel file below.</span>
+                <span>No datasets are bundled with this build. Run the data pipeline to generate one (see <code className="font-mono">data-extraction/README.md</code>) and drop it into <code className="font-mono">public/data/</code>, or upload an Excel file below.</span>
               </div>
             )}
 
