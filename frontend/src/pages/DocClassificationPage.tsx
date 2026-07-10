@@ -492,13 +492,16 @@ export function DocClassificationPage() {
     return reviewedDocClassifications.filter(r => ids.has(r.documentId) && !!r.isAnInvoice).length;
   }, [docClassificationData, reviewedDocClassifications]);
 
-  // User (manual) reviews that belong to the LOADED dataset — the number shown on the
-  // "User Reviewed" tab badge / "Show Reviewed" checkbox, so the badge always equals the
-  // count of documents the tab actually lists (no cross-dataset leakage).
-  const userReviewedInDatasetCount = useMemo(() => {
-    const ids = new Set(docClassificationData.map(d => d.documentId));
-    return reviewedDocClassifications.filter(r => ids.has(r.documentId) && !!r.isAnInvoice && !r.isAutoReviewed).length;
-  }, [docClassificationData, reviewedDocClassifications]);
+  // User (manual) reviews shown on the "User Reviewed" tab badge / "Show Reviewed" checkbox.
+  // Scoped through `docsWithMatchingPdfs` (the same filtered + PDF-matched set the User Reviewed
+  // tab actually lists) so the badge always equals the tab's row count — matching the Skipped
+  // badge's convention and never disagreeing with "N of M" once a dropdown filter or PDFs apply.
+  const userReviewedVisibleCount = useMemo(() => {
+    const userReviewedIds = new Set(
+      reviewedDocClassifications.filter(r => !!r.isAnInvoice && !r.isAutoReviewed).map(r => r.documentId)
+    );
+    return docsWithMatchingPdfs.filter(d => userReviewedIds.has(d.documentId)).length;
+  }, [docsWithMatchingPdfs, reviewedDocClassifications]);
 
   // Match PDF to current document using proper S3 path extraction
   const matchedPdf = useMemo(() => {
@@ -708,12 +711,21 @@ export function DocClassificationPage() {
     // Mark the document as skipped (won't appear in normal review queue)
     setSkippedDocIds(prev => new Set([...prev, currentDoc.documentId]));
 
-    // After marking skipped, the doc is removed from the queue (not_reviewed mode)
-    // so the next doc slides into safeIndex — only adjust when at the last position
-    if (filteredDocs.length === 1) {
-      setCurrentIndex(0);
-    } else if (safeIndex >= filteredDocs.length - 1) {
-      setCurrentIndex(Math.max(0, safeIndex - 1));
+    if (reviewStatusFilter !== 'not_reviewed') {
+      // In 'all' / 'user_reviewed' mode the skipped doc STAYS in the visible list (only the
+      // not_reviewed queue drops it), so — like Mark & Next — advance explicitly instead of
+      // relying on the doc sliding out from under safeIndex.
+      if (safeIndex < filteredDocs.length - 1) {
+        setCurrentIndex(safeIndex + 1);
+      }
+    } else {
+      // Normal mode: the skipped doc is removed from the queue, so the next doc slides into
+      // safeIndex automatically — only adjust when we were at the last position.
+      if (filteredDocs.length === 1) {
+        setCurrentIndex(0);
+      } else if (safeIndex >= filteredDocs.length - 1) {
+        setCurrentIndex(Math.max(0, safeIndex - 1));
+      }
     }
   };
 
@@ -986,7 +998,7 @@ export function DocClassificationPage() {
                   {
                     value: 'user_reviewed',
                     label: 'User Reviewed',
-                    count: userReviewedInDatasetCount,
+                    count: userReviewedVisibleCount,
                   },
                   { value: 'skipped', label: 'Skipped', count: skippedVisibleCount },
                   { value: 'all', label: 'All', count: null },
@@ -1243,9 +1255,9 @@ export function DocClassificationPage() {
             <Eye className="w-3 h-3 text-slate-400 group-hover:text-green-600" />
             <span className="text-xs text-slate-600 group-hover:text-green-700 font-medium">
               Show Reviewed
-              {userReviewedInDatasetCount > 0 && (
+              {userReviewedVisibleCount > 0 && (
                 <span className="ml-1 text-[10px] bg-green-100 text-green-700 px-1 py-0.5 rounded-full">
-                  {userReviewedInDatasetCount}
+                  {userReviewedVisibleCount}
                 </span>
               )}
             </span>

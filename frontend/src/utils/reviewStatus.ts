@@ -17,11 +17,13 @@ export const VENDOR_MATCH_CATEGORIES: VendorMatchCategory[] = ['Vendor Match', '
  */
 export function canonicalVendorMatch(doc: Pick<DocClassificationDocument, 'vendorMatchStatus' | 'originalVendorName' | 'vendorName'>): VendorMatchCategory {
   const s = norm(doc.vendorMatchStatus);
+  const orig = norm(doc.originalVendorName);
+  // With no AAI/original vendor there is nothing to match against — "No Original Data" wins even
+  // when the source column says Match/Mismatch. Otherwise a record-type-mismatch row (no vendor)
+  // carrying a stale "Vendor Mismatch" status would render a red badge above "AAI VendorName: -".
+  if (!orig || s === 'no original data') return 'No Original Data';
   if (s === 'vendor match') return 'Vendor Match';
   if (s === 'vendor mismatch') return 'Vendor Mismatch';
-  if (s === 'no original data') return 'No Original Data';
-  const orig = norm(doc.originalVendorName);
-  if (!orig) return 'No Original Data';
   return orig === norm(doc.vendorName) ? 'Vendor Match' : 'Vendor Mismatch';
 }
 
@@ -51,17 +53,17 @@ export function reviewVendorStatus(doc: Pick<ReviewedDocClassification, 'vendor2
 }
 
 /**
- * Customer-edit mismatch scenarios (from query.md / wk_result_edits): AAI/NLU value (original_json)
+ * Customer-edit mismatch scenarios (from wk_result_edits; see backend/queries/mismatch_review.sql): AAI/NLU value (original_json)
  * vs the customer-edited value (final_json), for the three review scenarios. Only meaningful for the
  * Mismatch Review dataset; for regular docs the customer-* fields are absent and everything is false.
  */
 export type MismatchScenario = 'recordType' | 'vendorName' | 'entityName';
 
 export function customerEditMismatches(doc: Pick<DocClassificationDocument,
-  'aaiRecordType' | 'customerRecordType' | 'originalVendorName' | 'customerVendorName' |
-  'aaiEntityId' | 'customerEntityId' | 'customerEntityName' | 'editMessageId' | 'mismatchScenarios'>) {
+  'aaiRecordType' | 'customerRecordType' | 'originalVendorName' | 'vendorName' | 'customerVendorName' |
+  'aaiEntityId' | 'customerEntityId' | 'aaiEntityName' | 'customerEntityName' | 'editMessageId' | 'mismatchScenarios'>) {
   // Prefer the authoritative scenario tags from the source sheet's WHERE clause; these define
-  // exactly which mismatch the row was pulled for (query.md), which a column comparison can't
+  // exactly which mismatch the row was pulled for (mismatch_review.sql), which a column comparison can't
   // always reproduce (e.g. OriginalVendorName != original_json.vendorName).
   const tags = doc.mismatchScenarios;
   if (tags && tags.length > 0) {
@@ -76,8 +78,12 @@ export function customerEditMismatches(doc: Pick<DocClassificationDocument,
   // Fallback: derive from AAI vs customer field comparison (untagged sources / live query rows).
   const has = (a?: string | null, b?: string | null) => !!(a && b) && norm(a) !== norm(b);
   const recordType = has(doc.aaiRecordType, doc.customerRecordType);
-  const vendorName = has(doc.originalVendorName, doc.customerVendorName);
-  const entityName = has(doc.aaiEntityId, doc.customerEntityId);
+  // The vendorName scenario is AAI's original NLU vendor vs the RESOLVED record vendor — mirroring
+  // the pipeline's WHERE (`original_json.vendorName != a.record.vendorName`, mismatch_review.sql),
+  // NOT final_json.vendorName. `originalVendorName` = original_json.vendorName, `vendorName` = record.
+  const vendorName = has(doc.originalVendorName, doc.vendorName);
+  // Entity change = a changed entity ID OR a changed entity name.
+  const entityName = has(doc.aaiEntityId, doc.customerEntityId) || has(doc.aaiEntityName, doc.customerEntityName);
   const isCustomerEditRecord = !!(doc.editMessageId || doc.customerRecordType || doc.customerVendorName ||
     doc.customerEntityName || doc.customerEntityId);
   return { recordType, vendorName, entityName, any: recordType || vendorName || entityName, isCustomerEditRecord };

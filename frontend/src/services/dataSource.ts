@@ -65,9 +65,9 @@ export async function loadManifest(): Promise<DataManifest> {
   return json;
 }
 
-// Map a worksheet name to the mismatch scenario its WHERE clause encodes (query.md), so a doc's
+// Map a worksheet name to the mismatch scenario its WHERE clause encodes (mismatch_review.sql), so a doc's
 // scenario is taken from the sheet it came from — authoritative, unlike re-deriving from columns.
-function scenarioForSheet(name: string): 'recordType' | 'vendorName' | 'entityName' | null {
+export function scenarioForSheet(name: string): 'recordType' | 'vendorName' | 'entityName' | null {
   const n = name.toLowerCase();
   if (!n.includes('mismatch')) return null; // only *_Mismatch sheets carry a scenario
   if (n.includes('record')) return 'recordType';

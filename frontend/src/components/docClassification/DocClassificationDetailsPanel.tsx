@@ -455,7 +455,11 @@ export function DocClassificationDetailsPanel({
                   <Row label="Record Type" aai={document.aaiRecordType || document.originalRecordType || ''} cust={document.customerRecordType || document.finalRecordType || ''} mismatch={edits.recordType} />
                   <Row label="Entity Name" aai={document.aaiEntityName || ''} cust={document.customerEntityName || ''} mismatch={edits.entityName} />
                   <Row label="Entity ID" aai={document.aaiEntityId || ''} cust={document.customerEntityId || ''} mismatch={edits.entityName} />
-                  <Row label="Vendor Name" aai={document.originalVendorName || ''} cust={document.customerVendorName || ''} mismatch={edits.vendorName} />
+                  {/* Vendor Name edit = AAI original NLU vendor → the resolved record vendor
+                      (`vendorName`), matching the pipeline's mismatch definition and the "Customer
+                      VendorName" card above. NOT customerVendorName (final_json.vendorName), which for
+                      these rows often equals the AAI value and would show a no-op "changed" arrow. */}
+                  <Row label="Vendor Name" aai={document.originalVendorName || ''} cust={document.vendorName || ''} mismatch={edits.vendorName} />
                 </div>
               </div>
             );
@@ -530,7 +534,7 @@ export function DocClassificationDetailsPanel({
           </div>
         )}
         {/* JSON Data Display - Side by Side */}
-        {(document.docClassificationJson || document.vendorNameJson) && (
+        {(document.docClassificationJson || document.vendorNameJson || document.docClassificationJsonRaw || document.vendorNameJsonRaw) && (
           <div className="p-3 border-b border-slate-200 bg-slate-50">
             <h4 className="text-xs font-semibold text-slate-700 mb-2">
               Extracted Data (JSON)
@@ -551,6 +555,8 @@ export function DocClassificationDetailsPanel({
                       </div>
                     ))}
                   </div>
+                ) : document.docClassificationJsonRaw ? (
+                  <div className="text-amber-700">Truncated — see <span className="font-medium">NLU Extraction</span> tab</div>
                 ) : (
                   <div className="text-slate-400">No data</div>
                 )}
@@ -572,6 +578,8 @@ export function DocClassificationDetailsPanel({
                       </div>
                     ))}
                   </div>
+                ) : document.vendorNameJsonRaw ? (
+                  <div className="text-amber-700">Truncated — see <span className="font-medium">Vendor Name Extraction</span> tab</div>
                 ) : (
                   <div className="text-slate-400">No data</div>
                 )}
@@ -1307,6 +1315,17 @@ export function DocClassificationDetailsPanel({
                       );
                     })}
                   </div>
+                ) : document.vendorNameJsonRaw ? (
+                  // vendorname_json is exported via CAST(... AS CHAR) and is often truncated
+                  // mid-string, so it can't be JSON-parsed. Show the raw text instead of a
+                  // misleading "No vendor data" (matches the NLU Extraction tab's fallback).
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-200 text-amber-900">raw · truncated</span>
+                      <span className="text-xs text-amber-700">Source value truncated at export — showing raw text.</span>
+                    </div>
+                    <pre className="text-[11px] font-mono whitespace-pre-wrap break-all max-h-96 overflow-y-auto bg-white border border-amber-200 rounded p-2 text-slate-700">{document.vendorNameJsonRaw}</pre>
+                  </div>
                 ) : (
                   <div className="text-slate-400 text-sm py-4 text-center">No vendor data</div>
                 )}
@@ -1314,7 +1333,7 @@ export function DocClassificationDetailsPanel({
             </div>
 
             {/* Empty State */}
-            {!document.docClassificationJson && !document.vendorNameJson && (
+            {!document.docClassificationJson && !document.vendorNameJson && !document.vendorNameJsonRaw && (
               <div className="text-center py-8 text-slate-500">
                 No extracted data available for this document
               </div>

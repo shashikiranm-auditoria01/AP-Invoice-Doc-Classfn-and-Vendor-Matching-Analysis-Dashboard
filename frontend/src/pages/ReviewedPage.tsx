@@ -120,17 +120,32 @@ export function ReviewedPage() {
     return m;
   }, []);
 
-  // Final rows: baseFiltered narrowed by the active per-column filters (AND across columns).
+  // Active per-column filters, restricted to values that still EXIST in the current base set. If a
+  // top-bar filter change makes a previously-selected value disappear (its checkbox is no longer
+  // rendered), that value would otherwise silently zero out the table with no visible cause. We drop
+  // such orphaned values from the applied filter — non-destructively, so reverting the top-bar filter
+  // re-applies them — and a whole filter with no surviving values becomes inert rather than empty.
+  const effectiveColumnFilters = useMemo(() => {
+    const out: [string, string[]][] = [];
+    for (const [key, vals] of Object.entries(columnFilters)) {
+      if (!vals.length) continue;
+      const allowed = new Set((columnOptions[key] || []).map(o => o.value));
+      const eff = vals.filter(v => allowed.has(v));
+      if (eff.length) out.push([key, eff]);
+    }
+    return out;
+  }, [columnFilters, columnOptions]);
+
+  // Final rows: baseFiltered narrowed by the (effective) per-column filters (AND across columns).
   const filtered = useMemo(() => {
-    const active = Object.entries(columnFilters).filter(([, v]) => v.length > 0);
-    if (active.length === 0) return baseFiltered;
+    if (effectiveColumnFilters.length === 0) return baseFiltered;
     return baseFiltered.filter(d =>
-      active.every(([key, vals]) => {
+      effectiveColumnFilters.every(([key, vals]) => {
         const acc = valueByKey.get(key);
         return acc ? vals.includes(acc(d)) : true;
       })
     );
-  }, [baseFiltered, columnFilters, valueByKey]);
+  }, [baseFiltered, effectiveColumnFilters, valueByKey]);
 
   const activeFilterCount =
     (Object.values(filters).filter(v => v !== ALL).length) + (search.trim() ? 1 : 0) + columnFilterCount;

@@ -122,7 +122,7 @@ export function AppProvider({ children }: AppProviderProps) {
     if (data.length > 0) {
       // Only stamp a fresh (regular/upload) selection when there ISN'T already an active one — an
       // in-session "Upload Excel" that merges into a Mismatch dataset must NOT relabel the context
-      // bar to "Daily Data Review" or drop the scenario/date range.
+      // bar to "Regular DA Analysis" or drop the scenario/date range.
       setActiveSelection(prev => prev ?? { kind: 'regular', tenantName: data[0]?.tenantName || 'Uploaded file', from: '', to: '' });
       setDataGatePassed(true);
     }

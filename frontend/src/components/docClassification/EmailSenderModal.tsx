@@ -100,13 +100,27 @@ export function EmailSenderModal({ pdfs, preselectPdfName, onClose }: EmailSende
     const signal = abortRef.current.signal;
     setApSending(true);
 
-    // Never email a PDF the app already flagged corrupt — skip and report it.
+    // Never email a PDF the app already flagged corrupt, or one too large for Gmail. Skip + report
+    // both up front rather than letting the backend fail opaquely mid-run. Gmail caps a message at
+    // 25 MB; base64 inflates ~33%, so refuse raw attachments over ~18 MB.
+    const MAX_ATTACH_BYTES = 18 * 1024 * 1024;
     const selectedPdfs = apPdfs.filter(p => selected.has(p.name));
     const corrupt = selectedPdfs.filter(p => p.isCorrupted);
-    const targets = selectedPdfs.filter(p => !p.isCorrupted);
+    const oversized = selectedPdfs.filter(p => !p.isCorrupted && p.data.length > MAX_ATTACH_BYTES);
+    const targets = selectedPdfs.filter(p => !p.isCorrupted && p.data.length <= MAX_ATTACH_BYTES);
     if (corrupt.length > 0) addLog(false, `Skipping ${corrupt.length} corrupt PDF(s): ${corrupt.map(p => p.name).join(', ')}`);
+    if (oversized.length > 0) addLog(false, `Skipping ${oversized.length} PDF(s) over 18 MB (Gmail limit): ${oversized.map(p => p.name).join(', ')}`);
 
-    // No (valid) PDFs selected → send one email without an attachment.
+    // If PDFs WERE selected but every one was corrupt, abort — don't silently fall through to the
+    // body-only path and send an attachment-less email the user never intended.
+    if (selectedPdfs.length > 0 && targets.length === 0) {
+      addLog(false, `All ${selectedPdfs.length} selected PDF(s) are corrupt — nothing sent. Deselect them or re-upload valid files.`);
+      setApProgress({ sent: 0, failed: selectedPdfs.length, total: selectedPdfs.length, done: true });
+      setApSending(false);
+      return;
+    }
+
+    // No PDFs selected at all → send one email without an attachment.
     if (targets.length === 0) {
       setApProgress({ sent: 0, failed: 0, total: 1, done: false });
       addLog(true, `Sending 1 email (no attachment) to ${recipient}…`);
@@ -233,6 +247,10 @@ export function EmailSenderModal({ pdfs, preselectPdfName, onClose }: EmailSende
     pending: hdRows.filter(r => r.status === 'pending' || r.status === 'sending').length,
   }), [hdRows]);
 
+  // Every row must resolve to a recipient — either its own `recipient` cell or the fallback field.
+  // Without this, rows with no recipient would be sent as `recipient: ''` and fail one-by-one.
+  const hdHasRecipients = hdRecipient.trim().length > 0 || (hdRows.length > 0 && hdRows.every(r => r.recipient.trim().length > 0));
+
   const handleHdSend = async () => {
     sessionStorage.setItem('email_sender', hdSender.trim());
     sessionStorage.setItem('email_app_password', hdPassword);
@@ -290,10 +308,11 @@ export function EmailSenderModal({ pdfs, preselectPdfName, onClose }: EmailSende
           <button onClick={onClose} className="w-9 h-9 rounded-lg border border-white/40 flex items-center justify-center hover:bg-white/15 text-2xl leading-none"><X className="w-5 h-5" /></button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — locked while a send is in flight: both loops share one cancel/abort controller, so
+            switching tabs mid-send and starting the other loop would corrupt the running one. */}
         <div className="flex border-b-2 border-slate-200 bg-[#f1f5f9] px-6">
-          <button className={tabBtn('ap')} onClick={() => setTab('ap')}><FileText className="w-4 h-4" />AP Invoice</button>
-          <button className={tabBtn('helpdesk')} onClick={() => setTab('helpdesk')}><Mail className="w-4 h-4" />Helpdesk Email Sender</button>
+          <button className={tabBtn('ap')} onClick={() => setTab('ap')} disabled={apSending || hdSending}><FileText className="w-4 h-4" />AP Invoice</button>
+          <button className={tabBtn('helpdesk')} onClick={() => setTab('helpdesk')} disabled={apSending || hdSending}><Mail className="w-4 h-4" />Helpdesk Email Sender</button>
         </div>
 
         {backendUp === false && (
@@ -459,9 +478,9 @@ export function EmailSenderModal({ pdfs, preselectPdfName, onClose }: EmailSende
                   <X className="w-4 h-4" /> Stop
                 </button>
               ) : (
-                <button onClick={handleHdSend} disabled={hdRows.length === 0 || !hdSender.trim() || !hdPassword.trim() || backendUp === false}
+                <button onClick={handleHdSend} disabled={hdRows.length === 0 || !hdSender.trim() || !hdPassword.trim() || backendUp === false || !hdHasRecipients}
                   className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={backendUp === false ? 'Backend not reachable — start the backend (uvicorn app:app --port 8787)' : undefined}>
+                  title={backendUp === false ? 'Backend not reachable — start the backend (uvicorn app:app --port 8787)' : !hdHasRecipients ? 'Some rows have no recipient — fill the fallback Recipient field or add a recipient column' : undefined}>
                   <Send className="w-4 h-4" /> Start Sending
                 </button>
               )}

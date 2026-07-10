@@ -140,7 +140,7 @@ export function DocClassificationMetricsPage() {
               docAccuracy: m.hasUserReviews ? `${m.docAccuracy}%` : '—',
               vendorAccuracy: m.hasVendorReviews ? `${m.vendorAccuracy}%` : '—',
               active: m.active, dismissed: m.dismissed, uiUnknown: m.uiUnknown,
-              written: m.written, notWritten: m.notWritten,
+              written: m.written, notWritten: m.notWritten, writtenUnknown: m.writtenUnknown,
               tenants: m.tenants.map(t => ({
                 name: t.name, total: t.total, reviewed: t.reviewed,
                 docAccuracy: t.userReviewed > 0 ? `${pct(t.docCorrect, t.userReviewed)}%` : '—',

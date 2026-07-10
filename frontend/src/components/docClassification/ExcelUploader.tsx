@@ -3,6 +3,10 @@ import * as XLSX from 'xlsx';
 import { Upload, File, AlertCircle, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { DocClassificationDocument, ReviewedDocClassification, DOC_CLASSIFICATION_REQUIRED_COLUMNS, DOC_CLASSIFICATION_COLUMNS, DOC_CLASSIFICATION_ALL_COLUMNS, parseDocClassificationRow, parseExcelDate } from '../../types/docClassification';
+import { scenarioForSheet } from '../../services/dataSource';
+
+// Marker key used to carry a row's source-sheet mismatch scenario through column normalization.
+const SHEET_SCENARIO_KEY = '__sheetScenario';
 
 interface ExcelUploaderProps {
   onUpload: (documents: DocClassificationDocument[], reviewedDocs?: ReviewedDocClassification[]) => void;
@@ -101,8 +105,13 @@ export function ExcelUploader({ onUpload, onClose }: ExcelUploaderProps) {
           const sheetRows = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
           if (sheetRows.length > 0) {
             console.log(`  Sheet "${sheetName}": ${sheetRows.length} rows`);
+            // Tag each row with the mismatch scenario its sheet encodes (RecordType_Mismatch →
+            // recordType, VendorName_Mismatch → vendorName, …). Authoritative per-sheet, so a doc
+            // appearing in multiple scenario sheets can be deduped with its scenarios unioned.
+            const scenario = scenarioForSheet(sheetName);
+            if (scenario) sheetRows.forEach(r => { r[SHEET_SCENARIO_KEY] = scenario; });
             allRows.push(...sheetRows);
-            
+
             // Check for Reviewed column
             if (sheetRows.length > 0 && Object.keys(sheetRows[0]).includes('Reviewed')) {
               hasReviewedColumn = true;
@@ -143,7 +152,11 @@ export function ExcelUploader({ onUpload, onClose }: ExcelUploaderProps) {
       // workbook stored an ID column as a NUMBER cell, SheetJS already rounded it during read and
       // the precision is unrecoverable. Detect it (any ID cell arriving as a JS number) and refuse
       // the upload with a clear instruction, rather than silently corrupting IDs.
-      const ID_COLUMNS = ['Document ID', 'Message ID', 'Tenant ID', 'vendorid'];
+      // Include the mismatch/customer-edit Snowflake columns the parser also reads as IDs
+      // (Edit Message ID, AAI entityID, Customer entityID) — else a mismatch workbook whose entity/
+      // edit-message IDs arrived as numbers would slip past the guard and get silently rounded.
+      const ID_COLUMNS = ['Document ID', 'Message ID', 'Tenant ID', 'vendorid',
+        'Edit Message ID', 'AAI entityID', 'Customer entityID'];
       const numericIdColumns = ID_COLUMNS.filter(col =>
         rows.some(r => typeof r[col] === 'number' && Number.isFinite(r[col] as number) && Math.abs(r[col] as number) >= 1e15)
       );
@@ -156,12 +169,11 @@ export function ExcelUploader({ onUpload, onClose }: ExcelUploaderProps) {
         return;
       }
 
-      // Validate required columns only
-      const firstRow = rows[0];
-      const actualColumns = Object.keys(firstRow);
+      // Validate required columns. Check across ALL rows, not just rows[0]: sheet_to_json omits a
+      // key when that cell is blank, so a required column that happens to be empty in the first data
+      // row would be wrongly reported "missing" if we only looked at rows[0].
       const requiredColumns = Array.from(DOC_CLASSIFICATION_REQUIRED_COLUMNS);
-
-      const missingColumns = requiredColumns.filter(col => !actualColumns.includes(col));
+      const missingColumns = requiredColumns.filter(col => !rows.some(r => col in r));
 
       if (missingColumns.length > 0) {
         setError(`Missing required columns: ${missingColumns.join(', ')}`);
@@ -171,10 +183,31 @@ export function ExcelUploader({ onUpload, onClose }: ExcelUploaderProps) {
 
       setIsResumeFile(hasReviewedColumn);
 
-      // Parse all rows
-      const documents = rows
-        .map(row => parseDocClassificationRow(row))
-        .filter((doc): doc is DocClassificationDocument => doc !== null);
+      // Parse all rows, deduping by documentId. A doc pulled into more than one mismatch scenario
+      // sheet (e.g. both RecordType_Mismatch and VendorName_Mismatch) must become ONE document with
+      // its scenarios unioned — not N duplicates that inflate totals and reviews. Mirrors the
+      // Get-Data path (parseWorkbookBuffer).
+      const byId = new Map<string, DocClassificationDocument>();
+      for (const row of rows) {
+        const doc = parseDocClassificationRow(row);
+        if (!doc) continue;
+        const scenario = row[SHEET_SCENARIO_KEY] as ('recordType' | 'vendorName' | 'entityName' | undefined);
+        if (scenario) doc.mismatchScenarios = [scenario];
+        const existing = byId.get(doc.documentId);
+        if (!existing) { byId.set(doc.documentId, doc); continue; }
+        if (scenario) {
+          existing.mismatchScenarios = Array.from(new Set([...(existing.mismatchScenarios || []), scenario]));
+        }
+        // Fill any field the first-seen row left empty from this row (later sheets carry richer cols).
+        const existingRec = existing as unknown as Record<string, unknown>;
+        for (const [k, v] of Object.entries(doc)) {
+          const cur = existingRec[k];
+          if ((cur === null || cur === undefined || cur === '') && v !== null && v !== undefined && v !== '') {
+            existingRec[k] = v;
+          }
+        }
+      }
+      const documents = Array.from(byId.values());
 
       if (documents.length === 0) {
         setError('No valid documents found in Excel files');

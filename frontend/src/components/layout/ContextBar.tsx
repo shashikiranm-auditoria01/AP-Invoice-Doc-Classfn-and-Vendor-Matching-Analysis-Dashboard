@@ -28,7 +28,7 @@ function fmtRange(from: string, to: string): string {
 
 /**
  * Persistent context strip under the tabs: tells anyone looking at the dashboard exactly which
- * pull they're viewing — Daily Data Review vs Mismatch Review (and which scenario) — plus the
+ * pull they're viewing — Regular DA Analysis vs Mismatch Review (and which scenario) — plus the
  * tenant, date range and document count, with a one-click path back to the gate.
  */
 export function ContextBar() {

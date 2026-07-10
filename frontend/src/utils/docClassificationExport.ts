@@ -133,7 +133,9 @@ function makeCell(
   colFont?: typeof AMBER_HEADER_FONT,
   colHeader?: string,
 ): CellDef {
-  const cell: CellDef = { v: value ?? '', t: 's' };
+  // Numbers export as numeric cells (so metric columns sum/sort in Excel); everything else — crucially
+  // the 18-digit ID columns, which are always passed as strings — stays text to preserve precision.
+  const cell: CellDef = { v: value ?? '', t: typeof value === 'number' ? 'n' : 's' };
   const valueStyle = colHeader ? getValueStyle(colHeader, value) : undefined;
 
   if (valueStyle) {
@@ -470,7 +472,7 @@ export interface MetricsReport {
   total: number; reviewedCount: number; reviewProgress: number;
   docAccuracy: string; vendorAccuracy: string;
   active: number; dismissed: number; uiUnknown: number;
-  written: number; notWritten: number;
+  written: number; notWritten: number; writtenUnknown: number;
   tenants: MetricsReportTenant[];
   weekly: { label: string; count: number }[];
 }
@@ -495,6 +497,7 @@ export function exportMetricsReport(r: MetricsReport): void {
     [makeCell('On UI — Unknown'), makeCell(r.uiUnknown)],
     [makeCell('Written to ERP'), makeCell(r.written)],
     [makeCell('Not Written'), makeCell(r.notWritten)],
+    [makeCell('Written — Unknown'), makeCell(r.writtenUnknown)],
   ];
   const ws1 = XLSX.utils.aoa_to_sheet(summary);
   ws1['!cols'] = [{ wch: 32 }, { wch: 16 }];
