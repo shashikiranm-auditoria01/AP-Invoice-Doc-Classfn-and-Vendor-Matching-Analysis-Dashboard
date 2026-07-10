@@ -54,7 +54,13 @@ export function DataGate() {
     setTenantName(name);
     setError(null);
     const entry = manifest?.datasets.find(d => d.kind === kind && d.tenantName === name);
-    if (entry) { setFrom(entry.createdFrom); setTo(entry.createdTo); }
+    if (entry) {
+      setFrom(entry.createdFrom); setTo(entry.createdTo);
+      // If the currently-selected scenario has no rows for the newly-picked tenant, fall back to
+      // "all" so a disabled/empty scenario is never carried into Get Data.
+      const n = entry.scenarioCounts?.[scenario];
+      if (scenario !== 'all' && typeof n === 'number' && n === 0) setScenario('all');
+    }
   };
 
   const canGetData = !!tenantName && !!from && !!to && from <= to && !loading;

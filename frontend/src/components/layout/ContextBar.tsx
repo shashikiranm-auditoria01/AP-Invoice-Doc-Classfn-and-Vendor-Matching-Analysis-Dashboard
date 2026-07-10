@@ -32,7 +32,7 @@ function fmtRange(from: string, to: string): string {
  * tenant, date range and document count, with a one-click path back to the gate.
  */
 export function ContextBar() {
-  const { activeSelection, docClassificationData, setDataGatePassed } = useAppContext();
+  const { activeSelection, docClassificationData, clearDocClassificationData } = useAppContext();
   if (!activeSelection) return null;
 
   const { kind, scenario, tenantName, from, to } = activeSelection;
@@ -81,7 +81,7 @@ export function ContextBar() {
         </div>
 
         <button
-          onClick={() => setDataGatePassed(false)}
+          onClick={clearDocClassificationData}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 border border-slate-300 bg-white hover:bg-slate-50 hover:text-slate-800 transition-colors shrink-0"
           title="Go back to the Get Data screen to load a different tenant, date range, or review type"
         >
